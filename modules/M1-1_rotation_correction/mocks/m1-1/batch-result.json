@@ -1,0 +1,49 @@
+{
+  "module": "M1-1",
+  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
+  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
+  "box_count": 9,
+  "boxes": [
+    {
+      "box_id": "box_0001",
+      "order_index": 1,
+      "bbox_xyxy_raw": [348, 456, 1763, 2579],
+      "bbox_xyxy_corrected": [15, 15, 1501, 2197],
+      "angle_deg": -0.97,
+      "confidence": 1.0,
+      "needs_manual_review": false,
+      "rotation_matrix_2x3": [
+        [0.9998566961576574, -0.016928885039897815, 37.117708982540535],
+        [0.016928885039897815, 0.9998566961576574, 0.1377922645972376]
+      ],
+      "output_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/corrected_boxes/box_0001.png",
+      "output_mask": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/masks/box_0001_mask.png",
+      "preview_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/previews/box_0001_before_after.jpg",
+      "review_source_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0001_source.jpg",
+      "source_crop_bbox_raw": [316, 424, 1795, 2611],
+      "correction_status": "auto"
+    },
+    {
+      "box_id": "box_0006",
+      "order_index": 6,
+      "bbox_xyxy_raw": [348, 11724, 1763, 14175],
+      "bbox_xyxy_corrected": [14, 15, 1490, 2515],
+      "angle_deg": -0.57,
+      "confidence": 0.43,
+      "needs_manual_review": true,
+      "rotation_matrix_2x3": [
+        [0.9999505153082835, -0.009948212638374504, 25.04647132228024],
+        [0.009948212638374504, 0.9999505153082835, 0.20552375375541487]
+      ],
+      "output_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/corrected_boxes/box_0006.png",
+      "output_mask": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/masks/box_0006_mask.png",
+      "preview_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/previews/box_0006_before_after.jpg",
+      "review_source_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg",
+      "source_crop_bbox_raw": [316, 11692, 1795, 14207],
+      "correction_status": "auto"
+    }
+  ],
+  "detection_preview": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/previews/strip_detection_overlay.jpg",
+  "qa_report": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/qa_report.md"
+}

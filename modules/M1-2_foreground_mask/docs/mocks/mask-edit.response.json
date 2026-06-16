@@ -1,0 +1,22 @@
+{
+  "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+  "status": "succeeded",
+  "message": "foreground mask manually edited",
+  "output_files": {
+    "mask_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.png",
+    "mask_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.tif",
+    "probability_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/probability.tif",
+    "overlay_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/overlay.png",
+    "contours_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/contours.json",
+    "metadata_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/metadata.json"
+  },
+  "metrics": {
+    "foreground_area_ratio": 0.28,
+    "component_count": 6,
+    "selected_pixel_count": 6900,
+    "removed_pixel_count": 1556,
+    "foreground_pixel_count": 734003
+  },
+  "warnings": [],
+  "edited_at": "2026-06-13T18:03:04.566900+00:00"
+}

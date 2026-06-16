@@ -1,0 +1,26 @@
+{
+  "task_id": "m1_3_20260614_171200_123456",
+  "status": "succeeded",
+  "status_url": "/api/preprocessing/segment-depth/m1_3_20260614_171200_123456",
+  "output_dir": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456",
+  "output_files": {
+    "refined_mask": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/refined_mask.png",
+    "refined_overlay": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/refined_overlay.png",
+    "lane_detection": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/lane_detection.json",
+    "lane_debug_overlay": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/lane_debug_overlay.png",
+    "reconstructed_strip": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/reconstructed_strip.png",
+    "reconstructed_strip_preview": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/reconstructed_strip_preview.jpg",
+    "segments_json": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/segments.json",
+    "quality_report": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/quality_report.json",
+    "review_manifest": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/review_manifest.json",
+    "depth_mapping": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/depth_mapping.json"
+  },
+  "metrics": {
+    "lane_count_detected": 5,
+    "segment_count": 50,
+    "removed_component_count": 2,
+    "strip_height_px": 10269,
+    "meters_per_pixel": 0.0004869023273931249
+  },
+  "warnings": []
+}

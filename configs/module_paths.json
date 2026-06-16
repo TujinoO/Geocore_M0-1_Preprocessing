@@ -1,0 +1,30 @@
+{
+  "schema_version": "geocore_preprocessing_modules.v1",
+  "workspace_root": "D:/Code/Geocore_M0and1_Preprocessing",
+  "modules": {
+    "M0-1": {
+      "name": "image_fusion",
+      "path": "modules/M0-1_image_fusion",
+      "python_path": "modules/M0-1_image_fusion/src",
+      "package": "geocore_m01_fusion"
+    },
+    "M1-1": {
+      "name": "rotation_correction",
+      "path": "modules/M1-1_rotation_correction",
+      "python_path": "modules/M1-1_rotation_correction",
+      "package": "geocore_m1_1"
+    },
+    "M1-2": {
+      "name": "foreground_mask",
+      "path": "modules/M1-2_foreground_mask",
+      "python_path": "modules/M1-2_foreground_mask",
+      "package": "geocore_mask"
+    },
+    "M1-3": {
+      "name": "separator_mark",
+      "path": "modules/M1-3_separator_mark",
+      "python_path": "modules/M1-3_separator_mark",
+      "package": "geocore_m1_3"
+    }
+  }
+}

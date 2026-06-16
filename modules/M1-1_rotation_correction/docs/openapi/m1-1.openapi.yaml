@@ -1,0 +1,581 @@
+openapi: 3.0.3
+info:
+  title: GeoCore M1-1 Rotation Correction API
+  version: 0.1.0
+  description: |
+    M1-1 岩心箱旋转校正算法模块前后端交互契约。
+
+    当前独立开发服务由 `geocore_m1_1.server` 提供，默认地址为
+    `http://127.0.0.1:8765`。本契约用于前端生成类型、准备 mock 数据、
+    以及给后端确认接口字段和权限行为。
+
+    权限说明：
+    - 当前独立算法服务未实现登录态、租户、项目、角色校验。
+    - 接入 GeoCore 主系统时，业务网关或后端 API 层必须按每个接口的
+      `x-permissions.integratedRequiredPermissions` 执行鉴权。
+    - 文件读取接口必须限制在当前任务输出目录和允许的输入数据目录内，
+      不允许前端通过任意本机路径读取服务器文件。
+servers:
+  - url: http://127.0.0.1:8765
+    description: Local standalone M1-1 API server
+tags:
+  - name: M1-1
+    description: 岩心箱旋转校正、结果查询和人工复核
+paths:
+  /api/m1-1/health:
+    get:
+      tags: [M1-1]
+      operationId: getM11Health
+      summary: 检查 M1-1 服务是否可用
+      description: 前端进入页面时可调用该接口判断本地算法服务是否启动。
+      x-permissions:
+        standaloneBehavior: 当前开发服务不校验认证。
+        integratedRequiredPermissions:
+          - public:health
+        integratedBehavior: 主系统内可作为内部健康检查，若暴露给普通用户应至少要求登录态。
+      responses:
+        "200":
+          description: 服务可用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                module: M1-1
+        default:
+          $ref: "#/components/responses/Error"
+  /api/m1-1/run:
+    post:
+      tags: [M1-1]
+      operationId: runM11RotationCorrection
+      summary: 自动执行 M1-1 岩心箱旋转校正
+      description: |
+        输入服务器本机可访问的原始影像路径，执行自动检测、切箱、角度估计、
+        最近邻旋转校正，并生成 metadata、校正图、掩膜和 QA 预览。
+
+        该接口当前为同步阻塞调用，大图处理可能持续数秒到数十秒。
+      x-permissions:
+        standaloneBehavior: 当前开发服务不校验认证，也不校验项目归属。
+        integratedRequiredPermissions:
+          - m1_1:execute
+          - project:file:read
+          - project:file:write
+        integratedBehavior: |
+          用户必须对目标项目拥有 M1-1 执行权限，并且只能读取该项目允许的输入文件、
+          写入该项目授权的输出目录。后端需要记录操作者、任务来源和输出目录。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunRequest"
+            examples:
+              default:
+                summary: ENVI dat + hdr 输入
+                externalValue: ../../mocks/m1-1/run-request.json
+      responses:
+        "200":
+          description: 自动校正完成，返回完整批处理结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchResult"
+              examples:
+                default:
+                  summary: 批处理结果
+                  externalValue: ../../mocks/m1-1/batch-result.json
+        "400":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  /api/m1-1/results:
+    get:
+      tags: [M1-1]
+      operationId: getM11Results
+      summary: 查询当前输出目录下的 metadata 结果
+      description: 前端刷新页面、人工复核后重新拉取状态时使用。
+      x-permissions:
+        standaloneBehavior: 当前开发服务不校验认证。
+        integratedRequiredPermissions:
+          - m1_1:read
+          - project:file:read
+        integratedBehavior: 用户只能读取自己有权访问的项目输出目录。
+      parameters:
+        - $ref: "#/components/parameters/OutputDir"
+      responses:
+        "200":
+          description: metadata.json 内容
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchResult"
+              examples:
+                default:
+                  summary: 批处理结果
+                  externalValue: ../../mocks/m1-1/batch-result.json
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/m1-1/review-items:
+    get:
+      tags: [M1-1]
+      operationId: listM11ReviewItems
+      summary: 查询待人工复核的岩心箱
+      description: |
+        默认只返回 `needs_manual_review=true` 的箱体；传入
+        `only_needs_review=false` 时返回全部箱体。
+      x-permissions:
+        standaloneBehavior: 当前开发服务不校验认证。
+        integratedRequiredPermissions:
+          - m1_1:read
+          - project:file:read
+        integratedBehavior: 用户只能查看自己有权访问项目中的复核项。
+      parameters:
+        - $ref: "#/components/parameters/OutputDir"
+        - name: only_needs_review
+          in: query
+          required: false
+          description: 是否仅返回需要人工复核的箱体，默认 true。
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: 复核项列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewItemsResponse"
+              examples:
+                default:
+                  summary: 待复核列表
+                  externalValue: ../../mocks/m1-1/review-items.json
+        "400":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/m1-1/manual-correction:
+    post:
+      tags: [M1-1]
+      operationId: submitM11ManualCorrection
+      summary: 提交人工矩形或多边形校正
+      description: |
+        前端必须在 `review_source_image` 的原始像素坐标系中提交标注。
+        如果图片在页面中缩放显示，前端需要先将 DOM 坐标换算回图片原始像素坐标。
+
+        后端会将标注坐标映射回原始长条影像，重新裁剪和旋转对应箱体，
+        覆盖该箱体的校正图和掩膜，并同步更新 metadata。
+      x-permissions:
+        standaloneBehavior: 当前开发服务不校验认证。
+        integratedRequiredPermissions:
+          - m1_1:review
+          - project:file:read
+          - project:file:write
+        integratedBehavior: |
+          用户必须拥有该项目的人工复核权限。后端需记录标注人、标注时间、
+          原始 annotation、更新前后的 box 状态，并防止越权修改其他项目输出。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualCorrectionRequest"
+            examples:
+              rectangle:
+                summary: 矩形框选
+                externalValue: ../../mocks/m1-1/manual-correction-request-rectangle.json
+              polygon:
+                summary: 多边形框选
+                externalValue: ../../mocks/m1-1/manual-correction-request-polygon.json
+      responses:
+        "200":
+          description: 人工校正成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManualCorrectionResponse"
+              examples:
+                default:
+                  summary: 人工校正响应
+                  externalValue: ../../mocks/m1-1/manual-correction-response.json
+        "400":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  /api/m1-1/file:
+    get:
+      tags: [M1-1]
+      operationId: getM11OutputFile
+      summary: 读取校正图、掩膜、预览图或 QA 文件
+      description: |
+        当前开发服务按服务器本机路径读取文件并返回二进制内容。
+        前端使用该接口加载 `output_image`、`output_mask`、`preview_image`、
+        `review_source_image`、`detection_preview` 和 `qa_report`。
+
+        接入主系统时建议改为基于 `task_id + relative_path` 的文件读取方式，
+        避免暴露服务器绝对路径。
+      x-permissions:
+        standaloneBehavior: 当前开发服务只检查文件是否存在，不限制路径范围。
+        integratedRequiredPermissions:
+          - m1_1:read
+          - project:file:read
+        integratedBehavior: |
+          必须校验文件路径属于当前用户有权访问的任务输出目录或允许的项目文件目录。
+          不允许读取任意服务器本机路径；建议返回 403 表示无权访问。
+      parameters:
+        - name: path
+          in: query
+          required: true
+          description: 服务器本机文件路径。前端传参时必须使用 encodeURIComponent。
+          schema:
+            type: string
+          example: D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg
+      responses:
+        "200":
+          description: 文件二进制内容
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            text/markdown:
+              schema:
+                type: string
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+components:
+  parameters:
+    OutputDir:
+      name: output_dir
+      in: query
+      required: false
+      description: M1-1 输出目录；不传时后端默认读取 `outputs/m1_1`。
+      schema:
+        type: string
+        default: outputs/m1_1
+      example: D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1
+  responses:
+    Error:
+      description: 错误响应
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              summary: 错误示例
+              externalValue: ../../mocks/m1-1/error-response.json
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, module]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        module:
+          type: string
+          enum: [M1-1]
+    RunRequest:
+      type: object
+      required: [input_path]
+      additionalProperties: false
+      properties:
+        input_path:
+          type: string
+          description: 原始影像路径。当前服务要求该路径在后端本机可访问。
+        hdr_path:
+          type: string
+          nullable: true
+          description: ENVI 头文件路径；输入为 dat 时必填，普通图片可为空。
+        output_dir:
+          type: string
+          default: outputs/m1_1
+          description: 输出目录；后端会生成校正图、掩膜、预览图和 metadata。
+        expected_box_count:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: 期望检测出的箱体数量；与实际数量不一致时后端应报错。
+        save_preview:
+          type: boolean
+          default: true
+          description: 是否保存检测预览和校正前后对比图。
+        manual_angle_delta_deg:
+          type: number
+          format: float
+          default: 0.0
+          description: 全局角度微调值，单位度。
+    BatchResult:
+      type: object
+      required:
+        - module
+        - input_path
+        - hdr_path
+        - output_dir
+        - box_count
+        - boxes
+      properties:
+        module:
+          type: string
+          enum: [M1-1]
+        input_path:
+          type: string
+        hdr_path:
+          type: string
+          nullable: true
+        output_dir:
+          type: string
+        box_count:
+          type: integer
+          minimum: 0
+        boxes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoreBoxResult"
+        detection_preview:
+          type: string
+          nullable: true
+          description: 长条影像箱体检测框预览图路径。
+        qa_report:
+          type: string
+          nullable: true
+          description: QA 报告路径。
+    CoreBoxResult:
+      type: object
+      required:
+        - box_id
+        - order_index
+        - bbox_xyxy_raw
+        - bbox_xyxy_corrected
+        - angle_deg
+        - confidence
+        - needs_manual_review
+        - rotation_matrix_2x3
+        - output_image
+        - output_mask
+        - correction_status
+      properties:
+        box_id:
+          type: string
+          pattern: "^box_[0-9]{4}$"
+          description: 箱体唯一 ID。
+        order_index:
+          type: integer
+          minimum: 1
+          description: 原始长条影像中从上到下的顺序。
+        bbox_xyxy_raw:
+          $ref: "#/components/schemas/BoundingBoxXyxy"
+        bbox_xyxy_corrected:
+          $ref: "#/components/schemas/BoundingBoxXyxy"
+        angle_deg:
+          type: number
+          format: float
+          description: 校正角度，单位度。
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: 自动角度估计置信度；人工多边形校正可为 1。
+        needs_manual_review:
+          type: boolean
+          description: 是否建议进入人工复核队列。
+        rotation_matrix_2x3:
+          $ref: "#/components/schemas/RotationMatrix2x3"
+        output_image:
+          type: string
+          description: 校正后的单箱图片路径。
+        output_mask:
+          type: string
+          description: 校正后的单箱掩膜路径。
+        preview_image:
+          type: string
+          nullable: true
+          description: 校正前后对比图路径。
+        review_source_image:
+          type: string
+          nullable: true
+          description: 人工复核源图路径；前端标注坐标基于该图原始像素。
+        source_crop_bbox_raw:
+          type: array
+          nullable: true
+          minItems: 4
+          maxItems: 4
+          items:
+            type: integer
+          description: 复核源图在原始长条影像中的裁剪范围。
+        correction_status:
+          type: string
+          enum: [auto, manual]
+          description: 当前箱体结果来源。
+        manual_annotation:
+          $ref: "#/components/schemas/ManualAnnotationRecord"
+    BoundingBoxXyxy:
+      type: array
+      description: 坐标格式 `[x0, y0, x1, y1]`，单位为像素。
+      minItems: 4
+      maxItems: 4
+      items:
+        type: integer
+    RotationMatrix2x3:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        type: array
+        minItems: 3
+        maxItems: 3
+        items:
+          type: number
+          format: float
+    ReviewItemsResponse:
+      type: object
+      required: [output_dir, count, items]
+      properties:
+        output_dir:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoreBoxResult"
+    ManualCorrectionRequest:
+      type: object
+      required: [output_dir, input_path, box_id, annotation]
+      additionalProperties: false
+      properties:
+        output_dir:
+          type: string
+          description: 当前 M1-1 输出目录。
+        input_path:
+          type: string
+          description: 原始影像路径。
+        hdr_path:
+          type: string
+          nullable: true
+          description: ENVI 头文件路径；普通图片可为空。
+        box_id:
+          type: string
+          pattern: "^box_[0-9]{4}$"
+          description: 要复核的箱体 ID。
+        annotation:
+          oneOf:
+            - $ref: "#/components/schemas/RectangleAnnotation"
+            - $ref: "#/components/schemas/PolygonAnnotation"
+        manual_angle_delta_deg:
+          type: number
+          format: float
+          default: 0.0
+          description: 人工额外角度微调值，单位度。
+    RectangleAnnotation:
+      type: object
+      required: [type, rect]
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [rectangle]
+        rect:
+          $ref: "#/components/schemas/Rect"
+    PolygonAnnotation:
+      type: object
+      required: [type, points]
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [polygon]
+        points:
+          type: array
+          minItems: 2
+          description: |
+            多边形点，单位为 `review_source_image` 原始像素。建议 4 点顺序为：
+            左上、右上、右下、左下。少于 4 点时后端只按外接框处理。
+          items:
+            $ref: "#/components/schemas/Point"
+    Rect:
+      type: object
+      required: [x, y, width, height]
+      additionalProperties: false
+      properties:
+        x:
+          type: number
+          minimum: 0
+        y:
+          type: number
+          minimum: 0
+        width:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        height:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+    Point:
+      type: object
+      required: [x, y]
+      additionalProperties: false
+      properties:
+        x:
+          type: number
+          minimum: 0
+        y:
+          type: number
+          minimum: 0
+    ManualCorrectionResponse:
+      type: object
+      required: [status, box]
+      properties:
+        status:
+          type: string
+          enum: [success]
+        box:
+          $ref: "#/components/schemas/CoreBoxResult"
+    ManualAnnotationRecord:
+      type: object
+      nullable: true
+      description: 人工校正成功后后端写入 metadata 的标注记录。
+      properties:
+        type:
+          type: string
+          enum: [rectangle, polygon]
+        points_source_px:
+          type: array
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+        source_crop_bbox_raw:
+          $ref: "#/components/schemas/BoundingBoxXyxy"
+    ErrorResponse:
+      type: object
+      required: [status, error]
+      properties:
+        status:
+          type: string
+          enum: [error]
+        error:
+          type: string
+        exception_type:
+          type: string
+          nullable: true

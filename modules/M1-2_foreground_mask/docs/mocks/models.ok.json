@@ -1,0 +1,7 @@
+{
+  "models": [
+    "CoreMaskUNet",
+    "UNet"
+  ],
+  "default_profile": "default"
+}

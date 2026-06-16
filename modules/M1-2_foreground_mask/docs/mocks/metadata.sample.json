@@ -1,0 +1,24 @@
+{
+  "module": "M1-2 foreground mask",
+  "model_name": "CoreMaskUNet",
+  "model_version": "v1.0.0",
+  "input_path": "examples/input/sample.tif",
+  "threshold": 0.5,
+  "postprocess": true,
+  "image_width": 4096,
+  "image_height": 2048,
+  "foreground_area_ratio": 0.32,
+  "component_count": 8,
+  "warnings": [],
+  "elapsed_seconds": 2.31,
+  "manual_edit_applied": true,
+  "manual_edit_history": [
+    {
+      "operation": "remove",
+      "region_count": 1,
+      "selected_pixel_count": 6900,
+      "removed_pixel_count": 1556,
+      "edited_at": "2026-06-13T18:03:04.566900+00:00"
+    }
+  ]
+}

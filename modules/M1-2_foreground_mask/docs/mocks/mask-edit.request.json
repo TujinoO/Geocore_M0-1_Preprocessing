@@ -1,0 +1,56 @@
+{
+  "operation": "remove",
+  "display_width": 1024,
+  "display_height": 512,
+  "regions": [
+    {
+      "type": "rectangle",
+      "bbox": [
+        100,
+        50,
+        240,
+        180
+      ]
+    },
+    {
+      "type": "polygon",
+      "points": [
+        [
+          300,
+          120
+        ],
+        [
+          430,
+          126
+        ],
+        [
+          420,
+          230
+        ],
+        [
+          290,
+          220
+        ]
+      ]
+    },
+    {
+      "type": "brush",
+      "radius": 10,
+      "points": [
+        [
+          520,
+          200
+        ],
+        [
+          540,
+          210
+        ],
+        [
+          565,
+          220
+        ]
+      ]
+    }
+  ],
+  "output_preview": true
+}

@@ -1,0 +1,1814 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Geo-Core AI M1-3 Core Segmentation API",
+    "version": "0.1.0",
+    "description": "M1-3 岩心柱体分割与深度标记模块前后端分离契约。该契约用于前端生成类型、构建 mock、确认字段与权限行为；其中 preview、segments、corrections、rerun、files 接口为前端页面需要预留的后端实现项。"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "System",
+      "description": "服务状态"
+    },
+    {
+      "name": "DepthMetadata",
+      "description": "岩心箱深度元数据"
+    },
+    {
+      "name": "SegmentDepth",
+      "description": "M1-3 分割与深度标记任务"
+    },
+    {
+      "name": "Review",
+      "description": "前端复核、预览与重跑"
+    },
+    {
+      "name": "Files",
+      "description": "产物文件访问"
+    }
+  ],
+  "paths": {
+    "/api/system/status": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getM13SystemStatus",
+        "summary": "查询 M1-3 服务状态",
+        "description": "前端进入页面或提交任务前可调用，用于判断算法服务是否可用。不要求业务权限。",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "服务可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatus"
+                },
+                "examples": {
+                  "ok": {
+                    "$ref": "#/components/examples/SystemStatusOk"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/core-boxes/depth-metadata": {
+      "post": {
+        "tags": [
+          "DepthMetadata"
+        ],
+        "operationId": "saveM13DepthMetadata",
+        "summary": "保存岩心箱深度元数据",
+        "description": "保存 M1-3 生成正式 CoreSegment 所需的起止深度、缺失段和深度锚点。前端应在提交分割任务前确保深度信息有效。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.depth_metadata:write"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepthMetadataRequest"
+              },
+              "examples": {
+                "saveDepthMetadata": {
+                  "$ref": "#/components/examples/DepthMetadataRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepthMetadataResponse"
+                },
+                "examples": {
+                  "saved": {
+                    "$ref": "#/components/examples/DepthMetadataSaved"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/core-boxes/{core_box_id}/depth-metadata": {
+      "get": {
+        "tags": [
+          "DepthMetadata"
+        ],
+        "operationId": "getM13DepthMetadata",
+        "summary": "查询岩心箱深度元数据",
+        "description": "进入 M1-3 页面时先查询该接口；404 表示尚未录入深度信息，前端应提示用户补录。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.depth_metadata:read"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CoreBoxId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepthMetadataResponse"
+                },
+                "examples": {
+                  "found": {
+                    "$ref": "#/components/examples/DepthMetadataSaved"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/segment-depth": {
+      "post": {
+        "tags": [
+          "SegmentDepth"
+        ],
+        "operationId": "submitM13SegmentDepthTask",
+        "summary": "提交 M1-3 分割与深度标记任务",
+        "description": "基于 M1-1 校正影像、M1-2 掩膜产物和深度信息生成长条岩心、图斑、质量报告。当前实现可同步返回，前端应兼容 pending/running 异步状态。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.task:run"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SegmentDepthRequest"
+              },
+              "examples": {
+                "recommended": {
+                  "$ref": "#/components/examples/SegmentDepthRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "任务已提交或已完成",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                },
+                "examples": {
+                  "succeeded": {
+                    "$ref": "#/components/examples/TaskSucceeded"
+                  },
+                  "running": {
+                    "$ref": "#/components/examples/TaskRunning"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/segment-depth/{task_id}": {
+      "get": {
+        "tags": [
+          "SegmentDepth"
+        ],
+        "operationId": "getM13SegmentDepthTask",
+        "summary": "查询 M1-3 任务状态和结果",
+        "description": "前端轮询任务状态；成功后读取 output_files、metrics、warnings，并可继续请求 preview 或 segments 分页接口。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.task:read"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "任务存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                },
+                "examples": {
+                  "succeeded": {
+                    "$ref": "#/components/examples/TaskSucceeded"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/segment-depth/{task_id}/segments": {
+      "get": {
+        "tags": [
+          "SegmentDepth"
+        ],
+        "operationId": "listM13Segments",
+        "summary": "分页查询 M1-3 图斑列表",
+        "description": "前端图斑表格/网格视图使用。该接口应读取任务产物 segments.json，并返回分页后的 CoreSegment 列表。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.segment:read"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          },
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PageSize"
+          },
+          {
+            "name": "quality_flag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "按质量标记过滤，例如 low_core_coverage 或 contains_missing_interval。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "图斑分页结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentPage"
+                },
+                "examples": {
+                  "firstPage": {
+                    "$ref": "#/components/examples/SegmentPage"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/segment-depth/{task_id}/preview": {
+      "get": {
+        "tags": [
+          "Review"
+        ],
+        "operationId": "getM13Preview",
+        "summary": "查询前端预览资源",
+        "description": "返回结果页所需的图片 URL、质量报告摘要、复核入口数据。正式前后端分离部署时前端应使用 URL，而不是本地绝对路径。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.preview:read"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "预览数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResponse"
+                },
+                "examples": {
+                  "preview": {
+                    "$ref": "#/components/examples/PreviewResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/segment-depth/{task_id}/corrections": {
+      "put": {
+        "tags": [
+          "Review"
+        ],
+        "operationId": "saveM13Corrections",
+        "summary": "保存人工复核修正",
+        "description": "保存前端复核时调整的列方向、切分长度、缺失段、深度锚点和备注。该接口只保存修正，不直接重跑。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.review:write"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionRequest"
+              },
+              "examples": {
+                "corrections": {
+                  "$ref": "#/components/examples/CorrectionRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/segment-depth/{task_id}/rerun": {
+      "post": {
+        "tags": [
+          "Review"
+        ],
+        "operationId": "rerunM13SegmentDepthTask",
+        "summary": "基于修正结果重跑 M1-3",
+        "description": "后端读取原任务输入和已保存 corrections，创建新的 M1-3 任务。前端可用返回的 task_id 跳转到新任务结果页。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.task:run"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "重跑任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                },
+                "examples": {
+                  "running": {
+                    "$ref": "#/components/examples/TaskRunning"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/files": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "operationId": "downloadM13File",
+        "summary": "访问任务产物文件",
+        "description": "将后端保存的任务产物路径映射为可下载响应。后端必须限制 path 只能指向当前用户有权限访问的 M1-3 任务输出目录。",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permissions": [
+          "m1_3.file:read"
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "后端任务产物路径或产物 key。不得允许任意系统路径穿透访问。"
+          },
+          {
+            "name": "disposition",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inline",
+                "attachment"
+              ],
+              "default": "inline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "文件内容",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "CoreBoxId": {
+        "name": "core_box_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "DH001_BOX_0008"
+      },
+      "TaskId": {
+        "name": "task_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "m1_3_20260614_171200_123456"
+      },
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "PageSize": {
+        "name": "page_size",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "请求参数或业务校验失败",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "depth_end_m must be greater than depth_start_m"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "未登录或 token 无效",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "Authentication credentials were not provided."
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "已登录但缺少接口所需权限",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "Missing permission: m1_3.task:run"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "资源不存在或当前用户不可见",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "Task was not found."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SystemStatus": {
+        "type": "object",
+        "required": [
+          "service",
+          "module",
+          "version",
+          "status"
+        ],
+        "properties": {
+          "service": {
+            "type": "string",
+            "example": "geocore-m1-3"
+          },
+          "module": {
+            "type": "string",
+            "example": "M1-3 core segmentation and depth marking"
+          },
+          "version": {
+            "type": "string",
+            "example": "0.1.0"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded",
+              "unavailable"
+            ]
+          }
+        }
+      },
+      "DepthMetadataRequest": {
+        "type": "object",
+        "required": [
+          "hole_id",
+          "core_box_id",
+          "depth_start_m",
+          "depth_end_m"
+        ],
+        "properties": {
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hole_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "钻孔号。"
+          },
+          "core_box_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "岩心箱唯一 ID。"
+          },
+          "box_no": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "run_no": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "depth_start_m": {
+            "type": "number",
+            "description": "岩心箱起始深度，单位 m。"
+          },
+          "depth_end_m": {
+            "type": "number",
+            "description": "岩心箱终止深度，单位 m；必须大于 depth_start_m。"
+          },
+          "missing_intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingInterval"
+            },
+            "default": []
+          },
+          "depth_anchors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepthAnchor"
+            },
+            "default": []
+          },
+          "operator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DepthMetadataResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DepthMetadataRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "core_box_id",
+              "status",
+              "updated_at"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "saved"
+                ]
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "SegmentDepthRequest": {
+        "type": "object",
+        "required": [
+          "core_box_id",
+          "m1_2_output_dir",
+          "output_dir",
+          "hole_id",
+          "depth_start_m",
+          "depth_end_m"
+        ],
+        "properties": {
+          "core_box_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "image_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "M1-1 校正后岩心箱影像路径；不传时后端可从 M1-2 metadata.json 读取。"
+          },
+          "m1_2_output_dir": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mask_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_dir": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hole_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/LayoutOptions"
+          },
+          "segmentation": {
+            "$ref": "#/components/schemas/SegmentationOptions"
+          },
+          "mask_refine": {
+            "$ref": "#/components/schemas/MaskRefineOptions"
+          },
+          "reconstruction": {
+            "$ref": "#/components/schemas/ReconstructionOptions"
+          },
+          "depth_mapping": {
+            "$ref": "#/components/schemas/DepthMappingOptions"
+          },
+          "missing_intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingInterval"
+            },
+            "default": []
+          },
+          "depth_anchors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepthAnchor"
+            },
+            "default": []
+          },
+          "gap_policy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "close_artificial_gaps",
+              "preserve_visual_gaps",
+              null
+            ]
+          }
+        }
+      },
+      "LayoutOptions": {
+        "type": "object",
+        "properties": {
+          "lane_count": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 5
+          },
+          "lane_order": {
+            "type": "string",
+            "enum": [
+              "left_to_right",
+              "right_to_left"
+            ],
+            "default": "left_to_right"
+          },
+          "lane_direction": {
+            "type": "string",
+            "enum": [
+              "top_to_bottom",
+              "bottom_to_top"
+            ],
+            "default": "top_to_bottom"
+          }
+        }
+      },
+      "SegmentationOptions": {
+        "type": "object",
+        "properties": {
+          "segment_length_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 10.0
+          },
+          "overlap_cm": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0.0,
+            "description": "必须小于 segment_length_cm。"
+          }
+        }
+      },
+      "MaskRefineOptions": {
+        "type": "object",
+        "properties": {
+          "enable": {
+            "type": "boolean",
+            "default": true
+          },
+          "outside_lane_remove": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "ReconstructionOptions": {
+        "type": "object",
+        "properties": {
+          "preview_max_width_px": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "生成前端预览图时的最大宽度。"
+          }
+        },
+        "additionalProperties": true
+      },
+      "DepthMappingOptions": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "linear",
+              "anchored"
+            ],
+            "default": "linear"
+          }
+        },
+        "additionalProperties": true
+      },
+      "MissingInterval": {
+        "type": "object",
+        "required": [
+          "depth_start_m",
+          "depth_end_m"
+        ],
+        "properties": {
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "default": "lost_core"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "imported",
+              "algorithm"
+            ],
+            "default": "manual"
+          }
+        }
+      },
+      "DepthAnchor": {
+        "type": "object",
+        "required": [
+          "depth_m",
+          "strip_y"
+        ],
+        "properties": {
+          "depth_m": {
+            "type": "number"
+          },
+          "strip_y": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "succeeded",
+          "failed",
+          "waiting_for_depth_metadata",
+          "needs_review"
+        ]
+      },
+      "TaskResponse": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "status"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "异步任务进度；当前同步实现可不返回。"
+          },
+          "status_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_dir": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_files": {
+            "$ref": "#/components/schemas/OutputFiles"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/TaskMetrics"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "default": []
+          },
+          "error_message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "OutputFiles": {
+        "type": "object",
+        "properties": {
+          "refined_mask": {
+            "type": "string"
+          },
+          "refined_overlay": {
+            "type": "string"
+          },
+          "lane_detection": {
+            "type": "string"
+          },
+          "lane_debug_overlay": {
+            "type": "string"
+          },
+          "reconstructed_strip": {
+            "type": "string"
+          },
+          "reconstructed_strip_preview": {
+            "type": "string"
+          },
+          "segments_json": {
+            "type": "string"
+          },
+          "quality_report": {
+            "type": "string"
+          },
+          "review_manifest": {
+            "type": "string"
+          },
+          "depth_mapping": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "TaskMetrics": {
+        "type": "object",
+        "properties": {
+          "lane_count_detected": {
+            "type": "integer"
+          },
+          "segment_count": {
+            "type": "integer"
+          },
+          "removed_component_count": {
+            "type": "integer"
+          },
+          "strip_height_px": {
+            "type": "integer"
+          },
+          "meters_per_pixel": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Warning": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "lane_count_mismatch"
+          },
+          "message": {
+            "type": "string",
+            "example": "Detected lane count differs from expected lane count."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "error"
+            ],
+            "default": "warning"
+          },
+          "target": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "CoreSegment": {
+        "type": "object",
+        "required": [
+          "segment_id",
+          "core_box_id",
+          "hole_id",
+          "depth_start_m",
+          "depth_end_m",
+          "depth_center_m",
+          "length_cm",
+          "image_path",
+          "mask_path",
+          "source_strip_bbox",
+          "core_coverage_ratio",
+          "missing_ratio",
+          "quality_flags"
+        ],
+        "properties": {
+          "segment_id": {
+            "type": "string"
+          },
+          "core_box_id": {
+            "type": "string"
+          },
+          "hole_id": {
+            "type": "string"
+          },
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "depth_center_m": {
+            "type": "number"
+          },
+          "length_cm": {
+            "type": "number"
+          },
+          "image_path": {
+            "type": "string"
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "正式前后端分离部署建议返回。"
+          },
+          "mask_path": {
+            "type": "string"
+          },
+          "mask_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_strip_bbox": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "core_coverage_ratio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "missing_ratio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "quality_flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      },
+      "BBox": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "minItems": 4,
+        "maxItems": 4,
+        "description": "[x_min, y_min, x_max, y_max]"
+      },
+      "SegmentPage": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "page",
+          "page_size",
+          "total",
+          "items"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreSegment"
+            }
+          }
+        }
+      },
+      "QualityReport": {
+        "type": "object",
+        "required": [
+          "lane_count_expected",
+          "lane_count_detected",
+          "segment_count",
+          "warnings"
+        ],
+        "properties": {
+          "lane_count_expected": {
+            "type": "integer"
+          },
+          "lane_count_detected": {
+            "type": "integer"
+          },
+          "removed_component_count": {
+            "type": "integer"
+          },
+          "removed_area_ratio": {
+            "type": "number"
+          },
+          "strip_pixel_length": {
+            "type": "integer"
+          },
+          "strip_pixel_width": {
+            "type": "integer"
+          },
+          "depth_span_m": {
+            "type": "number"
+          },
+          "meters_per_pixel": {
+            "type": "number"
+          },
+          "segment_count": {
+            "type": "integer"
+          },
+          "low_coverage_segment_count": {
+            "type": "integer"
+          },
+          "segments_with_missing_interval_count": {
+            "type": "integer"
+          },
+          "missing_interval_count": {
+            "type": "integer"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "default": []
+          }
+        },
+        "additionalProperties": true
+      },
+      "DepthMapping": {
+        "type": "object",
+        "required": [
+          "mode",
+          "depth_start_m",
+          "depth_end_m",
+          "strip_height_px",
+          "meters_per_pixel",
+          "anchors",
+          "missing_intervals"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "linear",
+              "anchored"
+            ]
+          },
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "strip_height_px": {
+            "type": "integer"
+          },
+          "meters_per_pixel": {
+            "type": "number"
+          },
+          "anchors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepthAnchor"
+            }
+          },
+          "missing_intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingInterval"
+            }
+          }
+        }
+      },
+      "PreviewResponse": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "needs_review",
+          "image_urls",
+          "quality_report",
+          "depth_mapping"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "needs_review": {
+            "type": "boolean"
+          },
+          "image_urls": {
+            "type": "object",
+            "required": [
+              "lane_debug_overlay",
+              "refined_overlay",
+              "reconstructed_strip_preview"
+            ],
+            "properties": {
+              "lane_debug_overlay": {
+                "type": "string"
+              },
+              "refined_overlay": {
+                "type": "string"
+              },
+              "reconstructed_strip_preview": {
+                "type": "string"
+              },
+              "reconstructed_strip": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "quality_report": {
+            "$ref": "#/components/schemas/QualityReport"
+          },
+          "depth_mapping": {
+            "$ref": "#/components/schemas/DepthMapping"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "default": []
+          }
+        }
+      },
+      "CorrectionRequest": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "$ref": "#/components/schemas/LayoutOptions"
+          },
+          "segmentation": {
+            "$ref": "#/components/schemas/SegmentationOptions"
+          },
+          "missing_intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingInterval"
+            }
+          },
+          "depth_anchors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepthAnchor"
+            }
+          },
+          "review_decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "needs_rerun",
+              "rejected"
+            ]
+          },
+          "review_notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CorrectionResponse": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "status",
+          "updated_at"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saved"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "examples": {
+      "SystemStatusOk": {
+        "summary": "服务在线",
+        "value": {
+          "service": "geocore-m1-3",
+          "module": "M1-3 core segmentation and depth marking",
+          "version": "0.1.0",
+          "status": "ok"
+        }
+      },
+      "DepthMetadataRequest": {
+        "summary": "保存深度元数据请求",
+        "value": {
+          "project_id": "PROJECT_A",
+          "hole_id": "DH001",
+          "core_box_id": "DH001_BOX_0008",
+          "box_no": "0008",
+          "run_no": "R08",
+          "depth_start_m": 70.0,
+          "depth_end_m": 75.0,
+          "missing_intervals": [
+            {
+              "depth_start_m": 72.35,
+              "depth_end_m": 72.42,
+              "reason": "lost_core",
+              "source": "manual"
+            }
+          ],
+          "depth_anchors": [],
+          "operator": "frontend_user",
+          "notes": "Depth entered from field log."
+        }
+      },
+      "DepthMetadataSaved": {
+        "summary": "深度元数据已保存",
+        "value": {
+          "core_box_id": "DH001_BOX_0008",
+          "status": "saved",
+          "project_id": "PROJECT_A",
+          "hole_id": "DH001",
+          "box_no": "0008",
+          "run_no": "R08",
+          "depth_start_m": 70.0,
+          "depth_end_m": 75.0,
+          "missing_intervals": [
+            {
+              "depth_start_m": 72.35,
+              "depth_end_m": 72.42,
+              "reason": "lost_core",
+              "source": "manual"
+            }
+          ],
+          "depth_anchors": [],
+          "operator": "frontend_user",
+          "notes": "Depth entered from field log.",
+          "updated_at": "2026-06-14T09:00:00+00:00"
+        }
+      },
+      "SegmentDepthRequest": {
+        "summary": "推荐任务提交请求",
+        "value": {
+          "core_box_id": "DH001_BOX_0008",
+          "image_path": "D:/data/corrected_boxes/box_0008.png",
+          "m1_2_output_dir": "D:/data/m1_2_outputs/box_0008",
+          "output_dir": "D:/data/m1_3_outputs",
+          "hole_id": "DH001",
+          "depth_start_m": 70.0,
+          "depth_end_m": 75.0,
+          "layout": {
+            "lane_count": 5,
+            "lane_order": "left_to_right",
+            "lane_direction": "top_to_bottom"
+          },
+          "segmentation": {
+            "segment_length_cm": 10.0,
+            "overlap_cm": 0.0
+          },
+          "mask_refine": {
+            "enable": true,
+            "outside_lane_remove": true
+          },
+          "gap_policy": "close_artificial_gaps",
+          "missing_intervals": [],
+          "depth_anchors": []
+        }
+      },
+      "TaskSucceeded": {
+        "summary": "任务成功",
+        "value": {
+          "task_id": "m1_3_20260614_171200_123456",
+          "status": "succeeded",
+          "status_url": "/api/preprocessing/segment-depth/m1_3_20260614_171200_123456",
+          "output_dir": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456",
+          "output_files": {
+            "refined_mask": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/refined_mask.png",
+            "refined_overlay": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/refined_overlay.png",
+            "lane_detection": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/lane_detection.json",
+            "lane_debug_overlay": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/lane_debug_overlay.png",
+            "reconstructed_strip": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/reconstructed_strip.png",
+            "reconstructed_strip_preview": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/reconstructed_strip_preview.jpg",
+            "segments_json": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/segments.json",
+            "quality_report": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/quality_report.json",
+            "review_manifest": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/review_manifest.json",
+            "depth_mapping": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/depth_mapping.json"
+          },
+          "metrics": {
+            "lane_count_detected": 5,
+            "segment_count": 50,
+            "removed_component_count": 2,
+            "strip_height_px": 10269,
+            "meters_per_pixel": 0.0004869023273931249
+          },
+          "warnings": []
+        }
+      },
+      "TaskRunning": {
+        "summary": "任务执行中",
+        "value": {
+          "task_id": "m1_3_20260614_171200_123456",
+          "status": "running",
+          "progress": 0.35,
+          "status_url": "/api/preprocessing/segment-depth/m1_3_20260614_171200_123456",
+          "output_files": {},
+          "metrics": {},
+          "warnings": []
+        }
+      },
+      "SegmentPage": {
+        "summary": "图斑分页",
+        "value": {
+          "task_id": "m1_3_20260614_171200_123456",
+          "page": 1,
+          "page_size": 2,
+          "total": 50,
+          "items": [
+            {
+              "segment_id": "DH001_0070.00_0070.10",
+              "core_box_id": "DH001_BOX_0008",
+              "hole_id": "DH001",
+              "depth_start_m": 70.0,
+              "depth_end_m": 70.1,
+              "depth_center_m": 70.05,
+              "length_cm": 10.0,
+              "image_path": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/segments/DH001_0070.00_0070.10.png",
+              "image_url": "/api/files?path=m1_3_20260614_171200_123456/segments/DH001_0070.00_0070.10.png",
+              "mask_path": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/segments/DH001_0070.00_0070.10_mask.png",
+              "mask_url": "/api/files?path=m1_3_20260614_171200_123456/segments/DH001_0070.00_0070.10_mask.png",
+              "source_strip_bbox": [
+                0,
+                0,
+                233,
+                206
+              ],
+              "core_coverage_ratio": 0.7243,
+              "missing_ratio": 0.0,
+              "quality_flags": []
+            },
+            {
+              "segment_id": "DH001_0070.10_0070.20",
+              "core_box_id": "DH001_BOX_0008",
+              "hole_id": "DH001",
+              "depth_start_m": 70.1,
+              "depth_end_m": 70.2,
+              "depth_center_m": 70.15,
+              "length_cm": 10.0,
+              "image_path": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/segments/DH001_0070.10_0070.20.png",
+              "image_url": "/api/files?path=m1_3_20260614_171200_123456/segments/DH001_0070.10_0070.20.png",
+              "mask_path": "D:/data/m1_3_outputs/m1_3_20260614_171200_123456/segments/DH001_0070.10_0070.20_mask.png",
+              "mask_url": "/api/files?path=m1_3_20260614_171200_123456/segments/DH001_0070.10_0070.20_mask.png",
+              "source_strip_bbox": [
+                0,
+                205,
+                233,
+                411
+              ],
+              "core_coverage_ratio": 0.7493,
+              "missing_ratio": 0.0,
+              "quality_flags": []
+            }
+          ]
+        }
+      },
+      "PreviewResponse": {
+        "summary": "结果页预览数据",
+        "value": {
+          "task_id": "m1_3_20260614_171200_123456",
+          "needs_review": false,
+          "image_urls": {
+            "lane_debug_overlay": "/api/files?path=m1_3_20260614_171200_123456/lane_debug_overlay.png",
+            "refined_overlay": "/api/files?path=m1_3_20260614_171200_123456/refined_overlay.png",
+            "reconstructed_strip_preview": "/api/files?path=m1_3_20260614_171200_123456/reconstructed_strip_preview.jpg",
+            "reconstructed_strip": "/api/files?path=m1_3_20260614_171200_123456/reconstructed_strip.png"
+          },
+          "quality_report": {
+            "lane_count_expected": 5,
+            "lane_count_detected": 5,
+            "removed_component_count": 2,
+            "removed_area_ratio": 0.020453882768621815,
+            "strip_pixel_length": 10269,
+            "strip_pixel_width": 233,
+            "depth_span_m": 5.0,
+            "meters_per_pixel": 0.0004869023273931249,
+            "segment_count": 50,
+            "low_coverage_segment_count": 0,
+            "segments_with_missing_interval_count": 0,
+            "missing_interval_count": 0,
+            "warnings": []
+          },
+          "depth_mapping": {
+            "mode": "linear",
+            "depth_start_m": 70.0,
+            "depth_end_m": 75.0,
+            "strip_height_px": 10269,
+            "meters_per_pixel": 0.0004869023273931249,
+            "anchors": [
+              {
+                "depth_m": 70.0,
+                "strip_y": 0
+              },
+              {
+                "depth_m": 75.0,
+                "strip_y": 10269
+              }
+            ],
+            "missing_intervals": []
+          },
+          "warnings": []
+        }
+      },
+      "CorrectionRequest": {
+        "summary": "人工复核修正",
+        "value": {
+          "layout": {
+            "lane_count": 5,
+            "lane_order": "right_to_left",
+            "lane_direction": "top_to_bottom"
+          },
+          "segmentation": {
+            "segment_length_cm": 10.0,
+            "overlap_cm": 0.0
+          },
+          "missing_intervals": [
+            {
+              "depth_start_m": 72.35,
+              "depth_end_m": 72.42,
+              "reason": "lost_core",
+              "source": "manual"
+            }
+          ],
+          "depth_anchors": [
+            {
+              "depth_m": 70.0,
+              "strip_y": 0
+            },
+            {
+              "depth_m": 75.0,
+              "strip_y": 10269
+            }
+          ],
+          "review_decision": "needs_rerun",
+          "review_notes": "Reverse lane order after manual review.",
+          "operator": "frontend_user"
+        }
+      }
+    }
+  }
+}

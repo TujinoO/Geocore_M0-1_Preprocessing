@@ -1,0 +1,19 @@
+{
+  "action_type": "m1_2_mask_edit",
+  "target": {
+    "target_type": "mask",
+    "target_id": "ZKH3_132_140_box_0001"
+  },
+  "payload": {
+    "operation": "remove",
+    "regions": [
+      {
+        "type": "rectangle",
+        "bbox": [120.0, 88.0, 240.0, 180.0]
+      }
+    ],
+    "display_width": 1024,
+    "display_height": 768
+  },
+  "comment": "Remove label paper from foreground mask."
+}

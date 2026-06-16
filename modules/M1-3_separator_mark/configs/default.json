@@ -1,0 +1,36 @@
+{
+  "layout": {
+    "lane_count": 5,
+    "lane_order": "left_to_right",
+    "lane_direction": "top_to_bottom",
+    "allow_snake_order": false,
+    "lane_padding_px": 8
+  },
+  "mask_refine": {
+    "enable": true,
+    "min_component_area_px": 200,
+    "fill_hole_area_px": 800,
+    "smooth_kernel_size": 3,
+    "outside_lane_remove": true,
+    "lane_margin_px": 20,
+    "removed_area_warning_ratio": 0.05
+  },
+  "reconstruction": {
+    "strip_width_mode": "max_lane_width",
+    "background": "transparent",
+    "gap_policy": "close_artificial_gaps",
+    "row_keep_min_coverage": 0.015,
+    "row_keep_padding_px": 2,
+    "large_gap_warning_px": 80
+  },
+  "depth_mapping": {
+    "mode": "linear",
+    "require_depth_metadata": true,
+    "max_depth_error_cm": 1.0
+  },
+  "segmentation": {
+    "segment_length_cm": 10.0,
+    "overlap_cm": 0.0,
+    "min_core_coverage_ratio": 0.2
+  }
+}

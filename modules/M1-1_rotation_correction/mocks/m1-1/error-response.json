@@ -1,0 +1,5 @@
+{
+  "status": "error",
+  "error": "File not found: D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/missing.png",
+  "exception_type": "FileNotFoundError"
+}

@@ -1,0 +1,52 @@
+{
+  "task_id": "pre_20260616_172814_001",
+  "boxes": [
+    {
+      "box_id": "box_0001",
+      "core_box_id": "ZKH3_132_140_box_0001",
+      "order_index": 1,
+      "depth_start_m": 132.0,
+      "depth_end_m": 132.888889,
+      "bbox_xyxy_m1_input": [348, 120, 1680, 2300],
+      "bbox_xyxy_rgb_reference": [348, 120, 1680, 2300],
+      "angle_deg": -0.42,
+      "confidence": 0.93,
+      "corrected_image": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/corrected_boxes/box_0001.png",
+      "m1_1_mask": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/masks/box_0001_mask.png",
+      "transform_stack_ref": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_transform_stack.json",
+      "m1_2": {
+        "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001",
+        "input_image": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/corrected_boxes/box_0001.png",
+        "output_files": {
+          "mask_png": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001/mask.png",
+          "mask_tif": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001/mask.tif",
+          "overlay_png": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001/overlay.png",
+          "metadata_json": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001/metadata.json"
+        },
+        "metrics": {
+          "foreground_area_ratio": 0.742,
+          "component_count": 5,
+          "elapsed_seconds": 2.31
+        },
+        "warnings": []
+      },
+      "m1_3": {
+        "task_id": "ZKH3_132_140_box_0001",
+        "status": "succeeded",
+        "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001",
+        "output_files": {
+          "segments_json": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments.json",
+          "quality_report": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/quality_report.json"
+        },
+        "metrics": {
+          "lane_count_detected": 5,
+          "segment_count": 80,
+          "strip_height_px": 10269,
+          "meters_per_pixel": 0.0000866
+        },
+        "warnings": []
+      },
+      "segments_with_cube_refs": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments_with_cube_refs.json"
+    }
+  ]
+}

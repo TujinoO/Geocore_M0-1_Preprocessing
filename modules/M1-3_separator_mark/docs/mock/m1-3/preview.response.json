@@ -1,0 +1,44 @@
+{
+  "task_id": "m1_3_20260614_171200_123456",
+  "needs_review": false,
+  "image_urls": {
+    "lane_debug_overlay": "/api/files?path=m1_3_20260614_171200_123456/lane_debug_overlay.png",
+    "refined_overlay": "/api/files?path=m1_3_20260614_171200_123456/refined_overlay.png",
+    "reconstructed_strip_preview": "/api/files?path=m1_3_20260614_171200_123456/reconstructed_strip_preview.jpg",
+    "reconstructed_strip": "/api/files?path=m1_3_20260614_171200_123456/reconstructed_strip.png"
+  },
+  "quality_report": {
+    "lane_count_expected": 5,
+    "lane_count_detected": 5,
+    "removed_component_count": 2,
+    "removed_area_ratio": 0.020453882768621815,
+    "strip_pixel_length": 10269,
+    "strip_pixel_width": 233,
+    "depth_span_m": 5.0,
+    "meters_per_pixel": 0.0004869023273931249,
+    "segment_count": 50,
+    "low_coverage_segment_count": 0,
+    "segments_with_missing_interval_count": 0,
+    "missing_interval_count": 0,
+    "warnings": []
+  },
+  "depth_mapping": {
+    "mode": "linear",
+    "depth_start_m": 70.0,
+    "depth_end_m": 75.0,
+    "strip_height_px": 10269,
+    "meters_per_pixel": 0.0004869023273931249,
+    "anchors": [
+      {
+        "depth_m": 70.0,
+        "strip_y": 0
+      },
+      {
+        "depth_m": 75.0,
+        "strip_y": 10269
+      }
+    ],
+    "missing_intervals": []
+  },
+  "warnings": []
+}

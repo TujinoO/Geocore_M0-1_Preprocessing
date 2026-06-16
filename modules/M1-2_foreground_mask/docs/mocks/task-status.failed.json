@@ -1,0 +1,13 @@
+{
+  "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+  "status": "failed",
+  "message": "foreground mask extraction failed",
+  "input_paths": [],
+  "output_dir": null,
+  "output_files": {},
+  "metrics": {},
+  "warnings": [],
+  "error": "input_path does not exist: D:/missing/core_box_001.tif",
+  "created_at": "2026-06-13T10:00:00+00:00",
+  "updated_at": "2026-06-13T10:00:02+00:00"
+}

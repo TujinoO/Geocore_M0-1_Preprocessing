@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geocore-m1-3-separator-mark"
+version = "0.1.0"
+description = "M1-3 core column segmentation, reconstruction, and depth marking module for Geo-Core AI."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "Pillow",
+  "pydantic"
+]
+
+[project.optional-dependencies]
+api = ["fastapi", "uvicorn"]
+
+[project.scripts]
+geocore-m1-3 = "geocore_m1_3.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["geocore_m1_3*"]

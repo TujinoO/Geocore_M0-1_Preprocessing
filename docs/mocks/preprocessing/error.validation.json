@@ -1,0 +1,10 @@
+{
+  "code": "VALIDATION_ERROR",
+  "message": "depth.depth_end_m must be greater than depth.depth_start_m.",
+  "detail": {
+    "field": "depth.depth_end_m",
+    "depth_start_m": 140.0,
+    "depth_end_m": 132.0
+  },
+  "request_id": "req_validation_001"
+}

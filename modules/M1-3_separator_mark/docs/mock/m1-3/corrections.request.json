@@ -1,0 +1,32 @@
+{
+  "layout": {
+    "lane_count": 5,
+    "lane_order": "right_to_left",
+    "lane_direction": "top_to_bottom"
+  },
+  "segmentation": {
+    "segment_length_cm": 10.0,
+    "overlap_cm": 0.0
+  },
+  "missing_intervals": [
+    {
+      "depth_start_m": 72.35,
+      "depth_end_m": 72.42,
+      "reason": "lost_core",
+      "source": "manual"
+    }
+  ],
+  "depth_anchors": [
+    {
+      "depth_m": 70.0,
+      "strip_y": 0
+    },
+    {
+      "depth_m": 75.0,
+      "strip_y": 10269
+    }
+  ],
+  "review_decision": "needs_rerun",
+  "review_notes": "Reverse lane order after manual review.",
+  "operator": "frontend_user"
+}

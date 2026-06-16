@@ -1,0 +1,26 @@
+{
+  "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+  "status": "succeeded",
+  "message": "foreground mask extraction completed",
+  "input_paths": [
+    "examples/input/sample.tif"
+  ],
+  "output_dir": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+  "output_files": {
+    "mask_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.png",
+    "mask_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.tif",
+    "probability_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/probability.tif",
+    "overlay_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/overlay.png",
+    "contours_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/contours.json",
+    "metadata_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/metadata.json"
+  },
+  "metrics": {
+    "foreground_area_ratio": 0.32,
+    "component_count": 8,
+    "elapsed_seconds": 2.31
+  },
+  "warnings": [],
+  "error": null,
+  "created_at": "2026-06-13T10:00:00+00:00",
+  "updated_at": "2026-06-13T10:00:03+00:00"
+}

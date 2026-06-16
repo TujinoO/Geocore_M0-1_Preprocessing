@@ -1,0 +1,44 @@
+{
+  "modules": [
+    {
+      "module_id": "M0-1",
+      "name": "image_fusion",
+      "package": "geocore_m01_fusion",
+      "version": "0.1.0",
+      "available": true,
+      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M0-1_image_fusion",
+      "health": "ok",
+      "warnings": []
+    },
+    {
+      "module_id": "M1-1",
+      "name": "rotation_correction",
+      "package": "geocore_m1_1",
+      "version": "0.1.0",
+      "available": true,
+      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M1-1_rotation_correction",
+      "health": "ok",
+      "warnings": []
+    },
+    {
+      "module_id": "M1-2",
+      "name": "foreground_mask",
+      "package": "geocore_mask",
+      "version": "1.0.0",
+      "available": true,
+      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M1-2_foreground_mask",
+      "health": "ok",
+      "warnings": []
+    },
+    {
+      "module_id": "M1-3",
+      "name": "separator_mark",
+      "package": "geocore_m1_3",
+      "version": "0.1.0",
+      "available": true,
+      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M1-3_separator_mark",
+      "health": "ok",
+      "warnings": []
+    }
+  ]
+}

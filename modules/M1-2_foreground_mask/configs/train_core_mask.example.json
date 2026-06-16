@@ -1,0 +1,25 @@
+{
+  "experiment_name": "core_mask_unet_v1",
+  "model": {
+    "name": "UNet",
+    "input_channels": 3,
+    "num_classes": 2
+  },
+  "data": {
+    "train_list": "datasets/core_mask/splits/train.txt",
+    "val_list": "datasets/core_mask/splits/val.txt",
+    "test_list": "datasets/core_mask/splits/test.txt",
+    "image_size": 512,
+    "label_norm": true
+  },
+  "training": {
+    "epochs": 100,
+    "batch_size": 8,
+    "learning_rate": 0.001,
+    "optimizer": "AdamW",
+    "loss": "bce_dice"
+  },
+  "output": {
+    "work_dir": "runs/core_mask_unet_v1"
+  }
+}

@@ -1,0 +1,779 @@
+{
+  "description": "M0-1 前端联调用 mock 数据。字段与 docs/openapi/m0-1-fusion.openapi.json 保持一致，可用于 MSW、Mock Service Worker、Apifox 或前端本地 fixture。",
+  "baseUrl": "/api",
+  "mocks": {
+    "GET /m0-1/capabilities": {
+      "status": 200,
+      "body": {
+        "module": "M0-1",
+        "api_version": "m0_fusion_api.v1",
+        "workflows": [
+          "prepare_aligned_roi",
+          "create_tie_point_session",
+          "edit_tie_point_session",
+          "apply_tie_point_session_to_envi",
+          "run_fusion"
+        ],
+        "tie_point_stages": {
+          "swir_to_rgb_lowres": {
+            "reference_name": "RGB low-resolution structure",
+            "moving_name": "SWIR structure",
+            "description": "SWIR local warp to the RGB low-resolution reference grid."
+          },
+          "nir_to_swir_lowres": {
+            "reference_name": "SWIR structure",
+            "moving_name": "NIR structure",
+            "description": "NIR local warp to the already-registered SWIR grid."
+          },
+          "joint_hsi_to_rgb_lowres_final": {
+            "reference_name": "RGB low-resolution structure",
+            "moving_name": "Joint NIR+SWIR HSI structure",
+            "description": "Final joint HSI-to-RGB fine warp applied to both NIR and SWIR."
+          }
+        },
+        "tie_point_operations": [
+          "add",
+          "update",
+          "reject",
+          "delete",
+          "activate",
+          "restore"
+        ],
+        "fusion_modes": [
+          "upsample_only",
+          "fast_preview",
+          "classical",
+          "deep_unsupervised"
+        ],
+        "recommended_chunk_size": [
+          256,
+          256,
+          32
+        ],
+        "permissions": {
+          "can_read": true,
+          "can_write": true,
+          "can_execute": true,
+          "can_admin": false,
+          "roles": [
+            "fusion_operator"
+          ]
+        }
+      }
+    },
+    "POST /m0-1/roi-jobs": {
+      "status": 202,
+      "request": {
+        "root": "E:\\Experiment_data\\2026 岩心高光谱数据\\2023_09_09_14_18_58-ZKH3号-132-140-0.0_0.0-0.0_0.0",
+        "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+        "crop_height": 768,
+        "crop_width": 512,
+        "local_warp": true,
+        "final_hsi_rgb_warp": true,
+        "project": {
+          "project_id": "geo-demo",
+          "borehole_id": "ZKH3",
+          "box_id": "132-140",
+          "depth_start_m": 132,
+          "depth_end_m": 140
+        }
+      },
+      "body": {
+        "job_id": "roi_job_20260616_001",
+        "status": "running",
+        "progress": {
+          "percent": 35,
+          "stage": "local_warp",
+          "message": "正在计算 SWIR/RGB 局部控制点"
+        },
+        "created_at": "2026-06-16T14:20:00+08:00",
+        "updated_at": "2026-06-16T14:21:10+08:00"
+      }
+    },
+    "GET /m0-1/roi-jobs/roi_job_20260616_001": {
+      "status": 200,
+      "body": {
+        "job_id": "roi_job_20260616_001",
+        "status": "succeeded",
+        "progress": {
+          "percent": 100,
+          "stage": "done",
+          "message": "ROI 准备完成"
+        },
+        "created_at": "2026-06-16T14:20:00+08:00",
+        "updated_at": "2026-06-16T14:26:00+08:00",
+        "result": {
+          "roi_id": "roi_ZKH3_132_140_768x512",
+          "schema_version": "m0_aligned_roi.v1",
+          "source_root": "E:\\Experiment_data\\2026 岩心高光谱数据\\2023_09_09_14_18_58-ZKH3号-132-140-0.0_0.0-0.0_0.0",
+          "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+          "manifest_asset": {
+            "asset_id": "asset_roi_manifest_001",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\roi_manifest.json",
+            "url": "/api/m0-1/assets/asset_roi_manifest_001",
+            "mime_type": "application/json"
+          },
+          "rgb_shape": [
+            22480,
+            2048
+          ],
+          "nir_shape": [
+            4292,
+            320
+          ],
+          "swir_shape": [
+            4341,
+            320
+          ],
+          "registration_mode": "scale_only",
+          "local_warp": true,
+          "final_hsi_rgb_warp": true,
+          "crop_rgb_window": {
+            "rgb_y0": 9560,
+            "rgb_y1": 10328,
+            "rgb_x0": 888,
+            "rgb_x1": 1400,
+            "height": 768,
+            "width": 512,
+            "common_y_min": 0,
+            "common_y_max": 22474.76234855545,
+            "common_x_min": 0,
+            "common_x_max": 2041.6000000000001
+          },
+          "source_windows": {
+            "nir": {
+              "source_y0": 1906,
+              "source_y1": 2053,
+              "source_x0": 136,
+              "source_x1": 217,
+              "height": 147,
+              "width": 81,
+              "local_refine": {
+                "applied": true,
+                "delta_y": -25,
+                "delta_x": -3,
+                "score": 0.292792235388348,
+                "anchor": "swir"
+              }
+            },
+            "swir": {
+              "source_y0": 1953,
+              "source_y1": 2102,
+              "source_x0": 139,
+              "source_x1": 220,
+              "height": 149,
+              "width": 81,
+              "local_refine": {
+                "applied": true,
+                "delta_y": 107,
+                "delta_x": 1,
+                "score": 0.30744364857673645
+              }
+            }
+          },
+          "warp_models": {
+            "swir_to_rgb_lowres": {
+              "method": "grid_tie_points_idw_warp",
+              "reference_shape": [
+                149,
+                81
+              ],
+              "moving_shape": [
+                149,
+                81
+              ],
+              "tie_point_count": 24,
+              "rejected_tie_point_count": 11,
+              "median_delta_y": 0,
+              "median_delta_x": 0,
+              "mean_score": 0.3997320234775543
+            },
+            "nir_to_swir_lowres": {
+              "method": "grid_tie_points_idw_warp",
+              "reference_shape": [
+                149,
+                81
+              ],
+              "moving_shape": [
+                147,
+                81
+              ],
+              "tie_point_count": 26,
+              "rejected_tie_point_count": 9,
+              "median_delta_y": -0.7248322367668152,
+              "median_delta_x": 0,
+              "mean_score": 0.45054543018341064
+            },
+            "joint_hsi_to_rgb_lowres_final": {
+              "method": "joint_hsi_to_rgb_lowres_final_grid_tie_points_idw_warp",
+              "reference_shape": [
+                149,
+                81
+              ],
+              "moving_shape": [
+                149,
+                81
+              ],
+              "tie_point_count": 33,
+              "rejected_tie_point_count": 21,
+              "median_delta_y": 0,
+              "median_delta_x": 0,
+              "mean_score": 0.33442679047584534,
+              "applied": true
+            }
+          },
+          "outputs": {
+            "rgb_hdr": {
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.hdr"
+            },
+            "rgb_dat": {
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.dat"
+            },
+            "nir_hdr": {
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.hdr"
+            },
+            "nir_dat": {
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.dat"
+            },
+            "swir_hdr": {
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.hdr"
+            },
+            "swir_dat": {
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.dat"
+            },
+            "previews": {
+              "rgb": {
+                "asset_id": "asset_roi_rgb_001",
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\previews\\roi_rgb.png",
+                "url": "/api/m0-1/assets/asset_roi_rgb_001",
+                "mime_type": "image/png",
+                "width": 512,
+                "height": 768
+              },
+              "overlay_rgb_nir": {
+                "asset_id": "asset_roi_overlay_rgb_nir_001",
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\previews\\roi_overlay_rgb_nir.png",
+                "url": "/api/m0-1/assets/asset_roi_overlay_rgb_nir_001",
+                "mime_type": "image/png",
+                "width": 512,
+                "height": 768
+              },
+              "overlay_rgb_swir": {
+                "asset_id": "asset_roi_overlay_rgb_swir_001",
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\previews\\roi_overlay_rgb_swir.png",
+                "url": "/api/m0-1/assets/asset_roi_overlay_rgb_swir_001",
+                "mime_type": "image/png",
+                "width": 512,
+                "height": 768
+              }
+            }
+          },
+          "notes": [
+            "Registration is estimated from downsampled structural previews.",
+            "When enabled, the final joint HSI-to-RGB low-resolution warp is applied identically to NIR and SWIR to preserve their internal alignment."
+          ]
+        }
+      }
+    },
+    "POST /m0-1/tiepoint-sessions": {
+      "status": 201,
+      "request": {
+        "roi_id": "roi_ZKH3_132_140_768x512",
+        "stage": "joint_hsi_to_rgb_lowres_final",
+        "render_preview": true
+      },
+      "body": {
+        "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+        "session_path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\session.json",
+        "preview_paths": {
+          "side_by_side": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_tiepoints_side_by_side.png",
+          "reference_overlay": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_reference_points.png",
+          "moving_overlay": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_moving_points.png",
+          "checkerboard": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png",
+          "context_side_by_side": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_side_by_side.png",
+          "context_reference_overlay": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_reference_points.png",
+          "context_moving_overlay": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_moving_points.png"
+        },
+        "preview_assets": {
+          "context_side_by_side": {
+            "asset_id": "asset_tp_context_side_001",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_side_by_side.png",
+            "url": "/api/m0-1/assets/asset_tp_context_side_001",
+            "mime_type": "image/png"
+          },
+          "context_reference_overlay": {
+            "asset_id": "asset_tp_context_ref_001",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_reference_points.png",
+            "url": "/api/m0-1/assets/asset_tp_context_ref_001",
+            "mime_type": "image/png"
+          },
+          "context_moving_overlay": {
+            "asset_id": "asset_tp_context_moving_001",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_moving_points.png",
+            "url": "/api/m0-1/assets/asset_tp_context_moving_001",
+            "mime_type": "image/png"
+          },
+          "checkerboard": {
+            "asset_id": "asset_tp_checker_001",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png",
+            "url": "/api/m0-1/assets/asset_tp_checker_001",
+            "mime_type": "image/png"
+          }
+        },
+        "session": {
+          "schema_version": "m0_tie_point_session.v1",
+          "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+          "stage": "joint_hsi_to_rgb_lowres_final",
+          "reference_name": "RGB low-resolution structure",
+          "moving_name": "Joint NIR+SWIR HSI structure",
+          "reference_shape": [
+            149,
+            81
+          ],
+          "moving_shape": [
+            149,
+            81
+          ],
+          "approx_offset_y": 0,
+          "approx_offset_x": 0,
+          "approx_scale_y": 1,
+          "approx_scale_x": 1,
+          "created_at": "2026-06-16T14:13:01+08:00",
+          "updated_at": "2026-06-16T14:13:01+08:00",
+          "metadata": {
+            "roi_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+            "roi_manifest": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\roi_manifest.json",
+            "stage_description": "Final joint HSI-to-RGB fine warp applied to both NIR and SWIR.",
+            "source": "roi_manifest"
+          },
+          "quality": {
+            "total_count": 54,
+            "active_count": 33,
+            "rejected_count": 21,
+            "deleted_count": 0,
+            "manual_count": 0,
+            "mean_score": 0.33442679047584534,
+            "median_delta_y": 0,
+            "median_delta_x": 0,
+            "delta_y_std": 1.0385698080062866,
+            "delta_x_std": 1.8673946857452393,
+            "warnings": []
+          },
+          "points": [
+            {
+              "id": "tp_0000",
+              "ref_y": 9,
+              "ref_x": 21,
+              "moving_y": 12,
+              "moving_x": 24,
+              "approx_y": 9,
+              "approx_x": 21.4,
+              "delta_y": 3,
+              "delta_x": 2.6,
+              "score": 0.29709590336412733,
+              "status": "active",
+              "source": "auto",
+              "note": ""
+            },
+            {
+              "id": "tp_0001",
+              "ref_y": 25,
+              "ref_x": 46,
+              "moving_y": 24,
+              "moving_x": 46,
+              "approx_y": 25.25,
+              "approx_x": 46.2,
+              "delta_y": -1.25,
+              "delta_x": -0.2,
+              "score": 0.4317592863588219,
+              "status": "active",
+              "source": "auto",
+              "note": ""
+            },
+            {
+              "id": "tp_0033",
+              "ref_y": 9,
+              "ref_x": 34,
+              "moving_y": 12,
+              "moving_x": 26,
+              "approx_y": 9,
+              "approx_x": 33.8,
+              "delta_y": 3,
+              "delta_x": -7.8,
+              "score": 0.27365880718180513,
+              "status": "rejected",
+              "source": "auto_rejected",
+              "note": ""
+            }
+          ],
+          "revision": 1
+        }
+      }
+    },
+    "PATCH /m0-1/tiepoint-sessions/63d0dc9c-4c13-423e-9b1a-633f3954c3c7": {
+      "status": 200,
+      "request": {
+        "operations": [
+          {
+            "op": "reject",
+            "id": "tp_0001"
+          },
+          {
+            "op": "add",
+            "ref_y": 74,
+            "ref_x": 46,
+            "moving_y": 74,
+            "moving_x": 45,
+            "score": 1,
+            "note": "manual tie point"
+          }
+        ],
+        "render_preview": true,
+        "revision": 1
+      },
+      "body": {
+        "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+        "changed_point_ids": [
+          "tp_0001",
+          "tp_manual_20260616_001"
+        ],
+        "quality": {
+          "total_count": 55,
+          "active_count": 33,
+          "rejected_count": 22,
+          "deleted_count": 0,
+          "manual_count": 1,
+          "mean_score": 0.354,
+          "median_delta_y": 0,
+          "median_delta_x": 0,
+          "delta_y_std": 1.01,
+          "delta_x_std": 1.77,
+          "warnings": []
+        },
+        "preview_paths": {
+          "checkerboard": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png"
+        },
+        "preview_assets": {
+          "checkerboard": {
+            "asset_id": "asset_tp_checker_002",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png",
+            "url": "/api/m0-1/assets/asset_tp_checker_002",
+            "mime_type": "image/png"
+          }
+        },
+        "session": {
+          "schema_version": "m0_tie_point_session.v1",
+          "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+          "stage": "joint_hsi_to_rgb_lowres_final",
+          "reference_name": "RGB low-resolution structure",
+          "moving_name": "Joint NIR+SWIR HSI structure",
+          "reference_shape": [
+            149,
+            81
+          ],
+          "moving_shape": [
+            149,
+            81
+          ],
+          "approx_offset_y": 0,
+          "approx_offset_x": 0,
+          "approx_scale_y": 1,
+          "approx_scale_x": 1,
+          "created_at": "2026-06-16T14:13:01+08:00",
+          "updated_at": "2026-06-16T14:18:44+08:00",
+          "metadata": {
+            "roi_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+            "roi_manifest": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\roi_manifest.json",
+            "stage_description": "Final joint HSI-to-RGB fine warp applied to both NIR and SWIR.",
+            "source": "roi_manifest"
+          },
+          "quality": {
+            "total_count": 55,
+            "active_count": 33,
+            "rejected_count": 22,
+            "deleted_count": 0,
+            "manual_count": 1,
+            "mean_score": 0.354,
+            "median_delta_y": 0,
+            "median_delta_x": 0,
+            "delta_y_std": 1.01,
+            "delta_x_std": 1.77,
+            "warnings": []
+          },
+          "points": [
+            {
+              "id": "tp_0001",
+              "ref_y": 25,
+              "ref_x": 46,
+              "moving_y": 24,
+              "moving_x": 46,
+              "approx_y": 25.25,
+              "approx_x": 46.2,
+              "delta_y": -1.25,
+              "delta_x": -0.2,
+              "score": 0.4317592863588219,
+              "status": "rejected",
+              "source": "auto",
+              "note": ""
+            },
+            {
+              "id": "tp_manual_20260616_001",
+              "ref_y": 74,
+              "ref_x": 46,
+              "moving_y": 74,
+              "moving_x": 45,
+              "approx_y": 74,
+              "approx_x": 46.2,
+              "delta_y": 0,
+              "delta_x": -1.2,
+              "score": 1,
+              "status": "active",
+              "source": "manual",
+              "note": "manual tie point"
+            }
+          ],
+          "revision": 2
+        }
+      }
+    },
+    "POST /m0-1/tiepoint-sessions/63d0dc9c-4c13-423e-9b1a-633f3954c3c7/apply": {
+      "status": 200,
+      "request": {
+        "input_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.hdr",
+        "input_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.dat",
+        "output_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.hdr",
+        "output_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.dat",
+        "target_sensor": "nir",
+        "min_active_points": 3
+      },
+      "body": {
+        "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+        "output_hdr": {
+          "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.hdr"
+        },
+        "output_dat": {
+          "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.dat"
+        },
+        "registration_model": {
+          "asset_id": "asset_registration_model_001",
+          "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.registration_model.json",
+          "url": "/api/m0-1/assets/asset_registration_model_001",
+          "mime_type": "application/json"
+        },
+        "quality": {
+          "total_count": 55,
+          "active_count": 33,
+          "rejected_count": 22,
+          "deleted_count": 0,
+          "manual_count": 1,
+          "mean_score": 0.354,
+          "median_delta_y": 0,
+          "median_delta_x": 0,
+          "warnings": []
+        },
+        "model": {
+          "method": "grid_tie_points_idw_warp",
+          "reference_shape": [
+            149,
+            81
+          ],
+          "moving_shape": [
+            149,
+            81
+          ],
+          "tie_point_count": 33
+        }
+      }
+    },
+    "POST /m0-1/fusion-jobs": {
+      "status": 202,
+      "request": {
+        "rgb_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.hdr",
+        "rgb_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.dat",
+        "nir_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.hdr",
+        "nir_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.dat",
+        "swir_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.hdr",
+        "swir_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.dat",
+        "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical",
+        "mode": "classical",
+        "streaming": true,
+        "chunk_size": [
+          256,
+          256,
+          32
+        ],
+        "spatial_detail_strength": 0.42,
+        "spatial_detail_small_radius": 2,
+        "spatial_detail_large_radius": 9
+      },
+      "body": {
+        "job_id": "fusion_job_20260616_001",
+        "status": "running",
+        "progress": {
+          "percent": 62,
+          "stage": "write_zarr",
+          "message": "正在分块写入 fused_cube.zarr"
+        },
+        "created_at": "2026-06-16T14:30:00+08:00",
+        "updated_at": "2026-06-16T14:33:20+08:00"
+      }
+    },
+    "GET /m0-1/fusion-jobs/fusion_job_20260616_001": {
+      "status": 200,
+      "body": {
+        "job_id": "fusion_job_20260616_001",
+        "status": "succeeded",
+        "progress": {
+          "percent": 100,
+          "stage": "done",
+          "message": "融合完成"
+        },
+        "created_at": "2026-06-16T14:30:00+08:00",
+        "updated_at": "2026-06-16T14:42:01+08:00",
+        "result": {
+          "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical",
+          "manifest": {
+            "schema_version": "m0_fusion_result.v1",
+            "module": "M0-1",
+            "algorithm": "GC-HyFuse",
+            "algorithm_mode": "classical",
+            "algorithm_version": "0.1.0",
+            "created_at": "2026-06-16T14:42:01+08:00",
+            "project": {
+              "project_id": "geo-demo",
+              "borehole_id": "ZKH3",
+              "box_id": "132-140",
+              "depth_start_m": 132,
+              "depth_end_m": 140
+            },
+            "grid": {
+              "reference": "rgb",
+              "height": 768,
+              "width": 512,
+              "axis_order": "y,x,band",
+              "pixel_unit": "rgb_pixel"
+            },
+            "cube": {
+              "path": "fused_cube.zarr",
+              "array": "reflectance",
+              "dtype": "float32",
+              "shape": [
+                768,
+                512,
+                553
+              ],
+              "chunks": [
+                256,
+                256,
+                32
+              ],
+              "unit": "reflectance",
+              "storage": "zarr_v2_uncompressed"
+            },
+            "metadata": {
+              "band_metadata": "metadata/band_metadata.csv",
+              "registration_model": "metadata/registration_model.json",
+              "spectral_stitch_model": "metadata/spectral_stitch_model.json",
+              "processing_config": "metadata/processing_config.json",
+              "input_metadata": "metadata/input_metadata.json",
+              "quality_report": "metrics/quality_report.json"
+            },
+            "previews": {
+              "preview_rgb": "previews/preview_rgb.png",
+              "preview_falsecolor_full": "previews/preview_falsecolor_full.png",
+              "preview_mean_reflectance": "previews/preview_mean_reflectance.png"
+            },
+            "compat_exports": {
+              "available": false
+            }
+          },
+          "quality_report": {
+            "summary": {
+              "status": "passed",
+              "notes": "Metrics are computed by degrading fused output back to original sensor grids."
+            },
+            "spectral": {
+              "nir_rmse": 0.01154863927513361,
+              "swir_rmse": 0.007237304002046585,
+              "nir_sam_mean_deg": 2.144407272338867,
+              "swir_sam_mean_deg": 0.1328057497739792,
+              "nir_band_cc_mean": 0.9974643502916608,
+              "swir_band_cc_mean": 0.9978956835610526
+            },
+            "spatial": {
+              "rgb_edge_correlation": 0.829036295413971
+            },
+            "algorithm": {
+              "mode": "classical",
+              "base_mode": "upsample_only",
+              "rank": 5,
+              "detail_strength": 0.12,
+              "spatial_detail_strength": 0.42,
+              "spatial_detail_small_radius": 2,
+              "spatial_detail_large_radius": 9,
+              "max_basis_pixels": 1000,
+              "back_projection_iters": 2
+            }
+          },
+          "assets": {
+            "manifest": {
+              "asset_id": "asset_fusion_manifest_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\manifest.json",
+              "url": "/api/m0-1/assets/asset_fusion_manifest_001",
+              "mime_type": "application/json"
+            },
+            "quality_report": {
+              "asset_id": "asset_quality_report_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\metrics\\quality_report.json",
+              "url": "/api/m0-1/assets/asset_quality_report_001",
+              "mime_type": "application/json"
+            },
+            "preview_rgb": {
+              "asset_id": "asset_fusion_preview_rgb_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\previews\\preview_rgb.png",
+              "url": "/api/m0-1/assets/asset_fusion_preview_rgb_001",
+              "mime_type": "image/png"
+            },
+            "preview_falsecolor_full": {
+              "asset_id": "asset_fusion_preview_falsecolor_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\previews\\preview_falsecolor_full.png",
+              "url": "/api/m0-1/assets/asset_fusion_preview_falsecolor_001",
+              "mime_type": "image/png"
+            },
+            "preview_mean_reflectance": {
+              "asset_id": "asset_fusion_preview_mean_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\previews\\preview_mean_reflectance.png",
+              "url": "/api/m0-1/assets/asset_fusion_preview_mean_001",
+              "mime_type": "image/png"
+            }
+          }
+        }
+      }
+    },
+    "403 forbidden example": {
+      "status": 403,
+      "body": {
+        "error": {
+          "code": "M0_PERMISSION_DENIED",
+          "message": "当前用户没有执行 M0-1 融合任务的权限。",
+          "details": {
+            "required_scope": "m0:fusion:execute"
+          }
+        }
+      }
+    },
+    "409 revision conflict example": {
+      "status": 409,
+      "body": {
+        "error": {
+          "code": "M0_TIEPOINT_SESSION_CONFLICT",
+          "message": "控制点会话已被其他用户更新，请刷新后重试。",
+          "details": {
+            "expected_revision": 3,
+            "received_revision": 2
+          }
+        }
+      }
+    }
+  }
+}

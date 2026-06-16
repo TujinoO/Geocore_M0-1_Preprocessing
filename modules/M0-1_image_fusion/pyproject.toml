@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geocore-m01-fusion"
+version = "0.1.0"
+description = "M0-1 hyperspectral-optical image fusion module for Geo-Core AI"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.23",
+  "pandas>=1.5",
+  "Pillow>=9",
+]
+
+[project.scripts]
+geocore-m01-fusion = "geocore_m01_fusion.cli:main"
+geocore-m01-prepare-roi = "geocore_m01_fusion.roi_cli:main"
+geocore-m01-tiepoints = "geocore_m01_fusion.tiepoints_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

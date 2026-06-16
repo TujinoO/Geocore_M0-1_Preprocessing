@@ -1,0 +1,20 @@
+{
+  "manifest_path": "D:/data/fusion_result/manifest.json",
+  "root": "D:/data/fusion_result",
+  "grid": {
+    "width": 2048,
+    "height": 22480,
+    "name": "rgb"
+  },
+  "preview_path": "D:/data/fusion_result/previews/preview_rgb.png",
+  "preview_grid": {
+    "width": 1024,
+    "height": 1024,
+    "name": "m1_working_preview"
+  },
+  "preview_to_reference_scale": [2.0, 21.953125],
+  "cube_path": "D:/data/fusion_result/fused_cube.zarr",
+  "band_metadata": "D:/data/fusion_result/metadata/band_metadata.csv",
+  "registration_model": "D:/data/fusion_result/metadata/registration_model.json",
+  "quality_report": "D:/data/fusion_result/metrics/quality_report.json"
+}

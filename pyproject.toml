@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geocore-m0and1-preprocessing"
+version = "0.1.0"
+description = "Unified M0/M1 preprocessing orchestration package for Geo-Core AI."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.23",
+  "Pillow>=9",
+]
+
+[project.optional-dependencies]
+m12 = ["torch", "scikit-image"]
+api = ["fastapi", "uvicorn"]
+
+[project.scripts]
+geocore-preprocess = "geocore_preprocessing.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

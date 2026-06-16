@@ -1,0 +1,19 @@
+# (1) install pytorch first !!!
+# (2) pip install -r requirements.txt
+tqdm
+torchsummary
+scikit-image
+scikit-learn
+hiddenlayer
+matplotlib
+IPython
+einops
+timm
+numba
+pywavelets
+fastapi
+uvicorn[standard]
+python-multipart
+psutil
+
+# (3) conda install -c conda-forge gdal

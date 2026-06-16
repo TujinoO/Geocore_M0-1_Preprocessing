@@ -1,0 +1,6 @@
+{
+  "service": "geocore-m1-3",
+  "module": "M1-3 core segmentation and depth marking",
+  "version": "0.1.0",
+  "status": "ok"
+}

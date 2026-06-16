@@ -1,0 +1,36 @@
+{
+  "user_id": "u_backend_demo",
+  "role": "algorithm_engineer",
+  "permissions": [
+    {
+      "permission": "preprocessing:read",
+      "allowed": true,
+      "denied_reason": null
+    },
+    {
+      "permission": "preprocessing:create",
+      "allowed": true,
+      "denied_reason": null
+    },
+    {
+      "permission": "preprocessing:cancel",
+      "allowed": true,
+      "denied_reason": null
+    },
+    {
+      "permission": "preprocessing:review",
+      "allowed": true,
+      "denied_reason": null
+    },
+    {
+      "permission": "preprocessing:export",
+      "allowed": true,
+      "denied_reason": null
+    },
+    {
+      "permission": "preprocessing:admin",
+      "allowed": false,
+      "denied_reason": "Only system administrators can view full runtime paths and model package internals."
+    }
+  ]
+}

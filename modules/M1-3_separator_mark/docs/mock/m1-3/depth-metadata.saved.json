@@ -1,0 +1,22 @@
+{
+  "core_box_id": "DH001_BOX_0008",
+  "status": "saved",
+  "project_id": "PROJECT_A",
+  "hole_id": "DH001",
+  "box_no": "0008",
+  "run_no": "R08",
+  "depth_start_m": 70.0,
+  "depth_end_m": 75.0,
+  "missing_intervals": [
+    {
+      "depth_start_m": 72.35,
+      "depth_end_m": 72.42,
+      "reason": "lost_core",
+      "source": "manual"
+    }
+  ],
+  "depth_anchors": [],
+  "operator": "frontend_user",
+  "notes": "Depth entered from field log.",
+  "updated_at": "2026-06-14T09:00:00+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "task_id": "m1_3_20260614_171200_123456",
+  "status": "running",
+  "progress": 0.35,
+  "status_url": "/api/preprocessing/segment-depth/m1_3_20260614_171200_123456",
+  "output_files": {},
+  "metrics": {},
+  "warnings": []
+}

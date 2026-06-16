@@ -1,0 +1,8 @@
+{
+  "input_path": "examples/input/sample.tif",
+  "output_dir": "api_runtime/outputs/demo",
+  "model_profile": "default",
+  "threshold": 0.5,
+  "enable_postprocess": true,
+  "output_preview": true
+}

@@ -1,0 +1,25 @@
+{
+  "core_box_id": "DH001_BOX_0008",
+  "image_path": "D:/data/corrected_boxes/box_0008.png",
+  "m1_2_output_dir": "D:/data/m1_2_outputs/box_0008",
+  "output_dir": "D:/data/m1_3_outputs",
+  "hole_id": "DH001",
+  "depth_start_m": 70.0,
+  "depth_end_m": 75.0,
+  "layout": {
+    "lane_count": 5,
+    "lane_order": "left_to_right",
+    "lane_direction": "top_to_bottom"
+  },
+  "segmentation": {
+    "segment_length_cm": 10.0,
+    "overlap_cm": 0.0
+  },
+  "mask_refine": {
+    "enable": true,
+    "outside_lane_remove": true
+  },
+  "gap_policy": "close_artificial_gaps",
+  "missing_intervals": [],
+  "depth_anchors": []
+}

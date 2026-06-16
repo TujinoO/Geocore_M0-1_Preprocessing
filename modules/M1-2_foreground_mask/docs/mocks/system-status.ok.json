@@ -1,0 +1,14 @@
+{
+  "service": "Geo-Core AI foreground mask API",
+  "status": "ok",
+  "cuda_available": true,
+  "cuda_device_count": 1,
+  "gpu_names": [
+    "NVIDIA GeForce RTX 4090"
+  ],
+  "memory": {
+    "total_gb": 63.83,
+    "available_gb": 41.25
+  },
+  "default_model_profile": "default"
+}

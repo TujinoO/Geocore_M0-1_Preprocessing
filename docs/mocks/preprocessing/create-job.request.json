@@ -1,0 +1,46 @@
+{
+  "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616",
+  "project": {
+    "project_id": "deep-earth-2026",
+    "hole_id": "ZKH3",
+    "box_id": "132-140",
+    "core_box_prefix": "ZKH3_132_140"
+  },
+  "m0": {
+    "manifest_path": "D:/data/fusion_result/manifest.json",
+    "mode": "classical",
+    "streaming": true
+  },
+  "m1_1": {
+    "input_image": "D:/data/raw/RGB-20230909_141858-00000.dat",
+    "hdr_path": "D:/data/raw/RGB-20230909_141858-00000.hdr",
+    "expected_box_count": 9,
+    "thumbnail_width": 512
+  },
+  "m1_2": {
+    "engine": "model",
+    "model_package": "D:/Code/Geocore_M1-2_foreground_mask/models/core_mask_unet_v1",
+    "threshold": 0.5,
+    "enable_postprocess": true
+  },
+  "m1_3": {
+    "segment_length_cm": 10,
+    "overlap_cm": 0,
+    "lane_count": 5,
+    "lane_order": "left_to_right",
+    "lane_direction": "top_to_bottom",
+    "gap_policy": "close_artificial_gaps"
+  },
+  "depth": {
+    "depth_start_m": 132.0,
+    "depth_end_m": 140.0,
+    "missing_intervals": [
+      {
+        "depth_start_m": 134.2,
+        "depth_end_m": 134.35,
+        "reason": "broken_core_missing",
+        "source": "manual"
+      }
+    ]
+  }
+}

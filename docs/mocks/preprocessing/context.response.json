@@ -1,0 +1,75 @@
+{
+  "schema_version": "geocore_preprocessing_context.v1",
+  "created_at": "2026-06-16T17:40:30+08:00",
+  "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616",
+  "fusion": {
+    "manifest_path": "D:/data/fusion_result/manifest.json",
+    "grid": {
+      "width": 2048,
+      "height": 22480,
+      "name": "rgb"
+    },
+    "preview_path": "D:/data/fusion_result/previews/preview_rgb.png",
+    "cube_ref": {
+      "manifest_path": "D:/data/fusion_result/manifest.json",
+      "cube_path": "D:/data/fusion_result/fused_cube.zarr",
+      "array": "reflectance",
+      "band_metadata": "D:/data/fusion_result/metadata/band_metadata.csv",
+      "registration_model": "D:/data/fusion_result/metadata/registration_model.json",
+      "axis_order": "y,x,band",
+      "grid": {
+        "reference": "rgb",
+        "height": 22480,
+        "width": 2048,
+        "axis_order": "y,x,band",
+        "pixel_unit": "rgb_pixel"
+      }
+    },
+    "quality_report": "D:/data/fusion_result/metrics/quality_report.json"
+  },
+  "m1_1": {
+    "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation",
+    "metadata_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/metadata.json",
+    "input_image": "D:/data/raw/RGB-20230909_141858-00000.dat",
+    "input_grid": {
+      "width": 2048,
+      "height": 22480,
+      "name": "m1_working_grid"
+    },
+    "input_to_rgb_reference_scale": [1.0, 1.0],
+    "box_count": 9,
+    "transform_stack": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_transform_stack.json"
+  },
+  "m1_2": {
+    "engine": {
+      "engine_requested": "model",
+      "engine_used": "model",
+      "model_package": "D:/Code/Geocore_M1-2_foreground_mask/models/core_mask_unet_v1",
+      "warnings": []
+    },
+    "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask"
+  },
+  "m1_3": {
+    "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark",
+    "depth_start_m": 132.0,
+    "depth_end_m": 140.0
+  },
+  "boxes": [
+    {
+      "box_id": "box_0001",
+      "core_box_id": "ZKH3_132_140_box_0001",
+      "order_index": 1,
+      "depth_start_m": 132.0,
+      "depth_end_m": 132.888889,
+      "bbox_xyxy_m1_input": [348, 120, 1680, 2300],
+      "bbox_xyxy_rgb_reference": [348, 120, 1680, 2300],
+      "angle_deg": -0.42,
+      "confidence": 0.93,
+      "corrected_image": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/corrected_boxes/box_0001.png",
+      "m1_1_mask": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/masks/box_0001_mask.png",
+      "transform_stack_ref": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_transform_stack.json",
+      "segments_with_cube_refs": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments_with_cube_refs.json"
+    }
+  ],
+  "warnings": []
+}

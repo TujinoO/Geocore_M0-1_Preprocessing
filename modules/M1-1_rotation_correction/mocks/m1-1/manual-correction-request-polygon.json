@@ -1,0 +1,16 @@
+{
+  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
+  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
+  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "box_id": "box_0007",
+  "annotation": {
+    "type": "polygon",
+    "points": [
+      {"x": 42, "y": 55},
+      {"x": 1370, "y": 38},
+      {"x": 1392, "y": 2200},
+      {"x": 51, "y": 2220}
+    ]
+  },
+  "manual_angle_delta_deg": 0.0
+}

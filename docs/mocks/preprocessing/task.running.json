@@ -1,0 +1,25 @@
+{
+  "task_id": "pre_20260616_172814_001",
+  "status": "running",
+  "stage": "m1_2_foreground_mask",
+  "progress": 0.62,
+  "message": "Running foreground mask inference for box 5/9.",
+  "project": {
+    "project_id": "deep-earth-2026",
+    "hole_id": "ZKH3",
+    "box_id": "132-140",
+    "core_box_prefix": "ZKH3_132_140"
+  },
+  "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616",
+  "output_files": {},
+  "artifacts": [],
+  "metrics": {
+    "box_count": 9,
+    "segment_count": 0,
+    "m0_registration_rmse_rgb_pixels": 1.6
+  },
+  "warnings": [],
+  "created_at": "2026-06-16T17:20:00+08:00",
+  "updated_at": "2026-06-16T17:28:14+08:00",
+  "created_by": "u_backend_demo"
+}

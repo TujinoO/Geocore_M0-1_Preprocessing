@@ -1,0 +1,15 @@
+{
+  "input_path": "examples/input",
+  "image_pattern": "*.tif",
+  "model_name": "UNet",
+  "model_path": "weights/train_UNet_1220.pth",
+  "num_classes": 2,
+  "band_num": 3,
+  "mean": [53.7393, 53.329227, 52.893757],
+  "std": [12.786107, 14.0913315, 15.2901],
+  "target_size": 256,
+  "overlap_rate": 0.25,
+  "threshold": 0.5,
+  "enable_postprocess": true,
+  "output_preview": true
+}

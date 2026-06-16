@@ -1,0 +1,15 @@
+{
+  "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+  "status": "running",
+  "message": "running foreground mask inference (1/1)",
+  "input_paths": [
+    "examples/input/sample.tif"
+  ],
+  "output_dir": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+  "output_files": {},
+  "metrics": {},
+  "warnings": [],
+  "error": null,
+  "created_at": "2026-06-13T10:00:00+00:00",
+  "updated_at": "2026-06-13T10:00:01+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "input_path": "examples/input",
+  "image_pattern": "*.tif",
+  "recursive": false,
+  "model_profile": "default",
+  "threshold": 0.5,
+  "enable_postprocess": true,
+  "output_preview": true
+}

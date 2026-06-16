@@ -1,0 +1,1580 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Geo-Core AI M0/M1 Preprocessing API",
+    "version": "0.1.0",
+    "description": "Unified preprocessing API contract for M0-1 image fusion, M1-1 rotation correction, M1-2 foreground mask, and M1-3 separator/depth marking."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "Local development server"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "preprocessing-system",
+      "description": "System status, module registry, and permission discovery."
+    },
+    {
+      "name": "preprocessing-jobs",
+      "description": "Create, inspect, cancel, and review preprocessing jobs."
+    },
+    {
+      "name": "preprocessing-results",
+      "description": "Read linked preprocessing context, boxes, segments, and artifacts."
+    }
+  ],
+  "paths": {
+    "/api/preprocessing/system/status": {
+      "get": {
+        "tags": ["preprocessing-system"],
+        "summary": "Get preprocessing service status",
+        "description": "Returns backend runtime status, module availability, GPU/memory information, and default model configuration. Requires preprocessing:read; admin-only fields may be omitted without preprocessing:admin.",
+        "operationId": "getPreprocessingSystemStatus",
+        "responses": {
+          "200": {
+            "description": "System status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preprocessing/modules": {
+      "get": {
+        "tags": ["preprocessing-system"],
+        "summary": "List registered preprocessing modules",
+        "operationId": "listPreprocessingModules",
+        "responses": {
+          "200": {
+            "description": "Module registry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["modules"],
+                  "properties": {
+                    "modules": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ModuleInfo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preprocessing/permissions": {
+      "get": {
+        "tags": ["preprocessing-system"],
+        "summary": "Get current user's preprocessing permissions",
+        "operationId": "getPreprocessingPermissions",
+        "responses": {
+          "200": {
+            "description": "Permission matrix for frontend button states",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preprocessing/manifest/inspect": {
+      "post": {
+        "tags": ["preprocessing-system"],
+        "summary": "Inspect an M0-1 manifest",
+        "description": "Resolves preview image, Zarr cube, band metadata, registration model, and quality report paths before creating a pipeline job.",
+        "operationId": "inspectFusionManifest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManifestInspectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved manifest information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManifestInspectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs": {
+      "post": {
+        "tags": ["preprocessing-jobs"],
+        "summary": "Create a full M0/M1 preprocessing job",
+        "description": "Creates an asynchronous preprocessing job. Frontend should poll GET /api/preprocessing/jobs/{task_id}. Requires preprocessing:create.",
+        "operationId": "createPreprocessingJob",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreprocessingJobCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Job accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      },
+      "get": {
+        "tags": ["preprocessing-jobs"],
+        "summary": "List preprocessing jobs",
+        "operationId": "listPreprocessingJobs",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/JobStatus"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hole_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged preprocessing jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}": {
+      "get": {
+        "tags": ["preprocessing-jobs"],
+        "summary": "Get preprocessing job status",
+        "operationId": "getPreprocessingJob",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreprocessingJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}/cancel": {
+      "post": {
+        "tags": ["preprocessing-jobs"],
+        "summary": "Cancel a preprocessing job",
+        "description": "Cancels a queued or running job. Requires preprocessing:cancel.",
+        "operationId": "cancelPreprocessingJob",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancelled job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreprocessingJob"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}/context": {
+      "get": {
+        "tags": ["preprocessing-results"],
+        "summary": "Get linked preprocessing context",
+        "operationId": "getPreprocessingContext",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preprocess context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreprocessContext"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}/boxes": {
+      "get": {
+        "tags": ["preprocessing-results"],
+        "summary": "List M1-1/M1-2/M1-3 core boxes for a job",
+        "operationId": "listPreprocessingBoxes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Core box summaries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["task_id", "boxes"],
+                  "properties": {
+                    "task_id": {
+                      "type": "string"
+                    },
+                    "boxes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CoreBoxSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}/segments": {
+      "get": {
+        "tags": ["preprocessing-results"],
+        "summary": "List CoreSegment records for a job",
+        "operationId": "listPreprocessingSegments",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          },
+          {
+            "name": "core_box_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "depth_from_m",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "depth_to_m",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged CoreSegment records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}/artifacts/{artifact_id}": {
+      "get": {
+        "tags": ["preprocessing-results"],
+        "summary": "Download or preview an artifact",
+        "description": "Frontend should use this endpoint instead of directly opening server-local paths. Requires preprocessing:read or preprocessing:export depending on artifact type.",
+        "operationId": "getPreprocessingArtifact",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          },
+          {
+            "name": "artifact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "disposition",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["inline", "attachment"],
+              "default": "inline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Artifact binary stream"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/jobs/{task_id}/review-actions": {
+      "post": {
+        "tags": ["preprocessing-jobs"],
+        "summary": "Submit a manual review action",
+        "description": "Records frontend review actions such as M1-1 box review, M1-2 mask edit request, or M1-3 depth anchor correction. Requires preprocessing:review.",
+        "operationId": "submitPreprocessingReviewAction",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Review action accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewActionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "TaskId": {
+        "name": "task_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "State conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": ["queued", "running", "succeeded", "failed", "cancelled", "needs_review"]
+      },
+      "PipelineStage": {
+        "type": "string",
+        "enum": ["initializing", "m0_fusion", "m1_1_rotation", "m1_2_foreground_mask", "m1_3_separator_mark", "finalizing", "done"]
+      },
+      "Permission": {
+        "type": "string",
+        "enum": ["preprocessing:read", "preprocessing:create", "preprocessing:cancel", "preprocessing:review", "preprocessing:export", "preprocessing:admin"]
+      },
+      "PermissionState": {
+        "type": "object",
+        "required": ["permission", "allowed"],
+        "properties": {
+          "permission": {
+            "$ref": "#/components/schemas/Permission"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "denied_reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PermissionResponse": {
+        "type": "object",
+        "required": ["user_id", "permissions"],
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionState"
+            }
+          }
+        }
+      },
+      "SystemStatus": {
+        "type": "object",
+        "required": ["service", "status", "modules"],
+        "properties": {
+          "service": {
+            "type": "string",
+            "example": "Geo-Core AI M0/M1 preprocessing API"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ok", "degraded", "error"]
+          },
+          "version": {
+            "type": "string"
+          },
+          "cuda_available": {
+            "type": "boolean"
+          },
+          "memory": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleInfo"
+            }
+          },
+          "default_m1_2_engine": {
+            "type": "string",
+            "enum": ["auto", "model", "classical"]
+          }
+        }
+      },
+      "ModuleInfo": {
+        "type": "object",
+        "required": ["module_id", "name", "available"],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "enum": ["M0-1", "M1-1", "M1-2", "M1-3"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "package": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string",
+            "description": "Server-side path. Frontend must display only when user has preprocessing:admin."
+          },
+          "health": {
+            "type": "string",
+            "enum": ["ok", "warning", "error"]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ManifestInspectRequest": {
+        "type": "object",
+        "required": ["manifest_path"],
+        "properties": {
+          "manifest_path": {
+            "type": "string"
+          }
+        }
+      },
+      "ImageGrid": {
+        "type": "object",
+        "required": ["width", "height", "name"],
+        "properties": {
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ManifestInspectResponse": {
+        "type": "object",
+        "required": ["manifest_path", "grid", "preview_path", "cube_path", "band_metadata"],
+        "properties": {
+          "manifest_path": {
+            "type": "string"
+          },
+          "root": {
+            "type": "string"
+          },
+          "grid": {
+            "$ref": "#/components/schemas/ImageGrid"
+          },
+          "preview_path": {
+            "type": "string"
+          },
+          "preview_grid": {
+            "$ref": "#/components/schemas/ImageGrid"
+          },
+          "preview_to_reference_scale": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "cube_path": {
+            "type": "string"
+          },
+          "band_metadata": {
+            "type": "string"
+          },
+          "registration_model": {
+            "type": "string",
+            "nullable": true
+          },
+          "quality_report": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProjectMetadata": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "hole_id": {
+            "type": "string"
+          },
+          "box_id": {
+            "type": "string"
+          },
+          "core_box_prefix": {
+            "type": "string"
+          }
+        }
+      },
+      "DepthConfig": {
+        "type": "object",
+        "required": ["depth_start_m", "depth_end_m"],
+        "properties": {
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "depth_anchors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepthAnchor"
+            }
+          },
+          "missing_intervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingInterval"
+            }
+          }
+        }
+      },
+      "DepthAnchor": {
+        "type": "object",
+        "required": ["depth_m", "strip_y"],
+        "properties": {
+          "depth_m": {
+            "type": "number"
+          },
+          "strip_y": {
+            "type": "number"
+          }
+        }
+      },
+      "MissingInterval": {
+        "type": "object",
+        "required": ["depth_start_m", "depth_end_m"],
+        "properties": {
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["manual", "metadata", "algorithm"]
+          }
+        }
+      },
+      "M0Input": {
+        "type": "object",
+        "properties": {
+          "manifest_path": {
+            "type": "string",
+            "description": "Existing M0-1 manifest. If omitted, rgb/nir/swir inputs must be provided."
+          },
+          "rgb_hdr": {
+            "type": "string"
+          },
+          "rgb_dat": {
+            "type": "string"
+          },
+          "nir_hdr": {
+            "type": "string"
+          },
+          "nir_dat": {
+            "type": "string"
+          },
+          "swir_hdr": {
+            "type": "string"
+          },
+          "swir_dat": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["upsample_only", "fast_preview", "classical", "deep_unsupervised"],
+            "default": "classical"
+          },
+          "streaming": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "M11Options": {
+        "type": "object",
+        "properties": {
+          "input_image": {
+            "type": "string",
+            "description": "Optional full-resolution RGB/ENVI path for M1-1. Defaults to M0 preview_rgb."
+          },
+          "hdr_path": {
+            "type": "string",
+            "nullable": true
+          },
+          "expected_box_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "thumbnail_width": {
+            "type": "integer",
+            "default": 512
+          }
+        }
+      },
+      "M12Options": {
+        "type": "object",
+        "properties": {
+          "engine": {
+            "type": "string",
+            "enum": ["auto", "model", "classical"],
+            "default": "model"
+          },
+          "model_package": {
+            "type": "string",
+            "nullable": true
+          },
+          "threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true
+          },
+          "enable_postprocess": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "M13Options": {
+        "type": "object",
+        "properties": {
+          "segment_length_cm": {
+            "type": "number",
+            "default": 10
+          },
+          "overlap_cm": {
+            "type": "number",
+            "default": 0
+          },
+          "lane_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "lane_order": {
+            "type": "string",
+            "enum": ["left_to_right", "right_to_left"],
+            "nullable": true
+          },
+          "lane_direction": {
+            "type": "string",
+            "enum": ["top_to_bottom", "bottom_to_top"],
+            "nullable": true
+          },
+          "gap_policy": {
+            "type": "string",
+            "enum": ["close_artificial_gaps", "preserve_all_gaps"],
+            "nullable": true
+          }
+        }
+      },
+      "PreprocessingJobCreateRequest": {
+        "type": "object",
+        "required": ["output_dir", "m0", "depth"],
+        "properties": {
+          "output_dir": {
+            "type": "string"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectMetadata"
+          },
+          "m0": {
+            "$ref": "#/components/schemas/M0Input"
+          },
+          "m1_1": {
+            "$ref": "#/components/schemas/M11Options"
+          },
+          "m1_2": {
+            "$ref": "#/components/schemas/M12Options"
+          },
+          "m1_3": {
+            "$ref": "#/components/schemas/M13Options"
+          },
+          "depth": {
+            "$ref": "#/components/schemas/DepthConfig"
+          },
+          "limit_boxes": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Debug-only limit. Production jobs should omit it."
+          }
+        }
+      },
+      "JobCreatedResponse": {
+        "type": "object",
+        "required": ["task_id", "status", "status_url"],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "status_url": {
+            "type": "string"
+          }
+        }
+      },
+      "PreprocessingJob": {
+        "type": "object",
+        "required": ["task_id", "status", "stage", "progress", "created_at", "updated_at"],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/PipelineStage"
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "message": {
+            "type": "string"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectMetadata"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "output_files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtifactRef"
+            }
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/PipelineMetrics"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineWarning"
+            }
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string"
+          }
+        }
+      },
+      "JobPage": {
+        "type": "object",
+        "required": ["items", "page", "page_size", "total"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreprocessingJob"
+            }
+          },
+          "page": {
+            "type": "integer"
+          },
+          "page_size": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "PipelineMetrics": {
+        "type": "object",
+        "properties": {
+          "box_count": {
+            "type": "integer"
+          },
+          "segment_count": {
+            "type": "integer"
+          },
+          "m0_registration_rmse_rgb_pixels": {
+            "type": "number",
+            "nullable": true
+          },
+          "m1_2_foreground_area_ratio_mean": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "PipelineWarning": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "error"],
+            "default": "warning"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/PipelineStage"
+          },
+          "target_id": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ArtifactRef": {
+        "type": "object",
+        "required": ["artifact_id", "label", "kind", "url"],
+        "properties": {
+          "artifact_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["json", "image", "mask", "zarr", "csv", "report", "other"]
+          },
+          "url": {
+            "type": "string"
+          },
+          "local_path": {
+            "type": "string",
+            "description": "Server-side path. Frontend should not fetch this directly."
+          },
+          "mime_type": {
+            "type": "string"
+          }
+        }
+      },
+      "CubeRef": {
+        "type": "object",
+        "required": ["manifest_path", "cube_path", "band_metadata", "array", "axis_order", "grid"],
+        "properties": {
+          "manifest_path": {
+            "type": "string"
+          },
+          "cube_path": {
+            "type": "string"
+          },
+          "array": {
+            "type": "string",
+            "example": "reflectance"
+          },
+          "band_metadata": {
+            "type": "string"
+          },
+          "registration_model": {
+            "type": "string",
+            "nullable": true
+          },
+          "axis_order": {
+            "type": "string",
+            "example": "y,x,band"
+          },
+          "grid": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "FusionContext": {
+        "type": "object",
+        "required": ["manifest_path", "grid", "preview_path", "cube_ref"],
+        "properties": {
+          "manifest_path": {
+            "type": "string"
+          },
+          "grid": {
+            "$ref": "#/components/schemas/ImageGrid"
+          },
+          "preview_path": {
+            "type": "string"
+          },
+          "cube_ref": {
+            "$ref": "#/components/schemas/CubeRef"
+          },
+          "quality_report": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "M11Context": {
+        "type": "object",
+        "properties": {
+          "output_dir": {
+            "type": "string"
+          },
+          "metadata_path": {
+            "type": "string"
+          },
+          "input_image": {
+            "type": "string"
+          },
+          "input_grid": {
+            "$ref": "#/components/schemas/ImageGrid"
+          },
+          "input_to_rgb_reference_scale": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "box_count": {
+            "type": "integer"
+          },
+          "transform_stack": {
+            "type": "string"
+          }
+        }
+      },
+      "M12Context": {
+        "type": "object",
+        "properties": {
+          "engine": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "output_dir": {
+            "type": "string"
+          }
+        }
+      },
+      "M13Context": {
+        "type": "object",
+        "properties": {
+          "output_dir": {
+            "type": "string"
+          },
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          }
+        }
+      },
+      "CoreBoxSummary": {
+        "type": "object",
+        "required": ["box_id", "core_box_id", "corrected_image"],
+        "properties": {
+          "box_id": {
+            "type": "string"
+          },
+          "core_box_id": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer"
+          },
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "bbox_xyxy_m1_input": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "bbox_xyxy_rgb_reference": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "angle_deg": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "corrected_image": {
+            "type": "string"
+          },
+          "m1_1_mask": {
+            "type": "string"
+          },
+          "transform_stack_ref": {
+            "type": "string"
+          },
+          "m1_2": {
+            "$ref": "#/components/schemas/M12Result"
+          },
+          "m1_3": {
+            "$ref": "#/components/schemas/M13Result"
+          },
+          "segments_with_cube_refs": {
+            "type": "string"
+          }
+        }
+      },
+      "M12Result": {
+        "type": "object",
+        "properties": {
+          "output_dir": {
+            "type": "string"
+          },
+          "input_image": {
+            "type": "string"
+          },
+          "output_files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "M13Result": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "output_files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "PreprocessContext": {
+        "type": "object",
+        "required": ["schema_version", "fusion", "m1_1", "m1_2", "m1_3", "boxes"],
+        "properties": {
+          "schema_version": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "fusion": {
+            "$ref": "#/components/schemas/FusionContext"
+          },
+          "m1_1": {
+            "$ref": "#/components/schemas/M11Context"
+          },
+          "m1_2": {
+            "$ref": "#/components/schemas/M12Context"
+          },
+          "m1_3": {
+            "$ref": "#/components/schemas/M13Context"
+          },
+          "boxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreBoxSummary"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CoreSegment": {
+        "type": "object",
+        "required": ["segment_id", "core_box_id", "depth_start_m", "depth_end_m", "image_path", "mask_path", "cube_ref"],
+        "properties": {
+          "segment_id": {
+            "type": "string"
+          },
+          "core_box_id": {
+            "type": "string"
+          },
+          "hole_id": {
+            "type": "string"
+          },
+          "depth_start_m": {
+            "type": "number"
+          },
+          "depth_end_m": {
+            "type": "number"
+          },
+          "depth_center_m": {
+            "type": "number"
+          },
+          "length_cm": {
+            "type": "number"
+          },
+          "image_path": {
+            "type": "string"
+          },
+          "mask_path": {
+            "type": "string"
+          },
+          "source_strip_bbox": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "core_coverage_ratio": {
+            "type": "number"
+          },
+          "missing_ratio": {
+            "type": "number"
+          },
+          "quality_flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grid": {
+            "type": "string"
+          },
+          "cube_ref": {
+            "$ref": "#/components/schemas/CubeRef"
+          },
+          "transform_stack_ref": {
+            "type": "string"
+          },
+          "source_refs": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "bbox_corrected_box_estimate": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "bbox_rgb_reference_parent_box": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "band_selection": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "SegmentPage": {
+        "type": "object",
+        "required": ["task_id", "items", "page", "page_size", "total"],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreSegment"
+            }
+          },
+          "page": {
+            "type": "integer"
+          },
+          "page_size": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "BBox": {
+        "type": "array",
+        "description": "Pixel bbox [x0, y0, x1, y1]. x1/y1 are exclusive unless explicitly documented otherwise.",
+        "items": {
+          "type": "integer"
+        },
+        "minItems": 4,
+        "maxItems": 4
+      },
+      "CancelJobRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ReviewActionRequest": {
+        "type": "object",
+        "required": ["action_type", "target"],
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "enum": ["m1_1_box_review", "m1_2_mask_edit", "m1_3_depth_anchor_edit", "mark_needs_review", "mark_reviewed"]
+          },
+          "target": {
+            "type": "object",
+            "required": ["target_type", "target_id"],
+            "properties": {
+              "target_type": {
+                "type": "string",
+                "enum": ["job", "box", "mask", "segment", "depth_mapping"]
+              },
+              "target_id": {
+                "type": "string"
+              }
+            }
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Action-specific payload. For mask edits include operation and regions."
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
+      "ReviewActionResponse": {
+        "type": "object",
+        "required": ["review_id", "status", "accepted_at"],
+        "properties": {
+          "review_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["accepted", "applied", "rejected"]
+          },
+          "accepted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resulting_task_status": {
+            "$ref": "#/components/schemas/JobStatus"
+          }
+        }
+      }
+    }
+  }
+}

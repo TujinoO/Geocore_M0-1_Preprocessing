@@ -1,0 +1,1343 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Geo-Core AI M1-2 Foreground Mask API",
+    "version": "1.0.0",
+    "description": "M1-2 岩心柱前景掩膜算法模块前后端交互契约。本文档用于前端生成类型、准备 mock 数据、确认字段和权限行为；运行时 FastAPI 自动文档仍可在 /docs 查看。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "本地联调服务"
+    }
+  ],
+  "tags": [
+    {
+      "name": "system",
+      "description": "系统状态和运行环境"
+    },
+    {
+      "name": "foreground-mask",
+      "description": "M1-2 前景掩膜模块级接口"
+    },
+    {
+      "name": "preprocessing",
+      "description": "前处理业务流程推荐接口"
+    }
+  ],
+  "paths": {
+    "/api/system/status": {
+      "get": {
+        "tags": ["system"],
+        "operationId": "getSystemStatus",
+        "summary": "查询算法服务状态",
+        "description": "用于前端判断服务是否可用、GPU/CUDA 是否可用以及默认模型配置。 standalone 模式当前不校验登录态；集成到主系统后建议仅允许具备系统诊断或算法使用权限的用户访问。",
+        "x-permission": "m1.foregroundMask.read",
+        "responses": {
+          "200": {
+            "description": "服务状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatus"
+                },
+                "examples": {
+                  "ok": {
+                    "$ref": "#/components/examples/SystemStatusOk"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/m1/foreground-mask/models": {
+      "get": {
+        "tags": ["foreground-mask"],
+        "operationId": "listForegroundMaskModels",
+        "summary": "查询可用前景掩膜模型",
+        "description": "前端用于填充模型配置选择。正式业务界面通常使用 default_profile，不需要暴露模型内部训练参数。",
+        "x-permission": "m1.foregroundMask.read",
+        "responses": {
+          "200": {
+            "description": "模型列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForegroundMaskModelsResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "$ref": "#/components/examples/ForegroundMaskModelsOk"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/m1/foreground-mask/jobs": {
+      "post": {
+        "tags": ["foreground-mask"],
+        "operationId": "createForegroundMaskJob",
+        "summary": "创建前景掩膜异步任务",
+        "description": "基于后端可访问的文件路径或目录创建任务。接口立即返回 task_id，前端应继续轮询状态接口获取结果。",
+        "x-permission": "m1.foregroundMask.create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForegroundMaskRequest"
+              },
+              "examples": {
+                "pathInput": {
+                  "$ref": "#/components/examples/ForegroundMaskRequestPathInput"
+                },
+                "directoryInput": {
+                  "$ref": "#/components/examples/ForegroundMaskRequestDirectoryInput"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCreateResponse"
+                },
+                "examples": {
+                  "created": {
+                    "$ref": "#/components/examples/TaskCreated"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/foreground-mask": {
+      "post": {
+        "tags": ["preprocessing"],
+        "operationId": "createPreprocessingForegroundMaskJob",
+        "summary": "创建前处理前景掩膜异步任务",
+        "description": "推荐给前端正式业务流程使用的创建任务接口，字段结构与 /api/m1/foreground-mask/jobs 一致。",
+        "x-permission": "preprocessing.foregroundMask.create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForegroundMaskRequest"
+              },
+              "examples": {
+                "pathInput": {
+                  "$ref": "#/components/examples/ForegroundMaskRequestPathInput"
+                },
+                "directoryInput": {
+                  "$ref": "#/components/examples/ForegroundMaskRequestDirectoryInput"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCreateResponse"
+                },
+                "examples": {
+                  "created": {
+                    "$ref": "#/components/examples/TaskCreated"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/m1/foreground-mask/upload": {
+      "post": {
+        "tags": ["foreground-mask"],
+        "operationId": "uploadForegroundMaskJob",
+        "summary": "上传图像并创建前景掩膜任务",
+        "description": "用于纯 Web 前端直接上传本地文件。响应仍然是异步任务创建结果，前端继续使用 task_id 轮询状态。",
+        "x-permission": "m1.foregroundMask.create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ForegroundMaskUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "上传成功并创建任务",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCreateResponse"
+                },
+                "examples": {
+                  "created": {
+                    "$ref": "#/components/examples/TaskCreated"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/m1/foreground-mask/jobs/{task_id}": {
+      "get": {
+        "tags": ["foreground-mask"],
+        "operationId": "getForegroundMaskJob",
+        "summary": "查询前景掩膜任务状态",
+        "description": "前端应以 500 ms 到 2000 ms 的间隔轮询。status 为 succeeded 后读取 output_files 展示结果；status 为 failed 时展示 error。",
+        "x-permission": "m1.foregroundMask.read",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "任务状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskInfo"
+                },
+                "examples": {
+                  "running": {
+                    "$ref": "#/components/examples/TaskRunning"
+                  },
+                  "succeeded": {
+                    "$ref": "#/components/examples/TaskSucceeded"
+                  },
+                  "failed": {
+                    "$ref": "#/components/examples/TaskFailed"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/status/{task_id}": {
+      "get": {
+        "tags": ["preprocessing"],
+        "operationId": "getPreprocessingForegroundMaskStatus",
+        "summary": "查询前处理前景掩膜任务状态",
+        "description": "推荐给前端正式业务流程使用的状态接口，响应结构与 /api/m1/foreground-mask/jobs/{task_id} 一致。",
+        "x-permission": "preprocessing.foregroundMask.read",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "任务状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskInfo"
+                },
+                "examples": {
+                  "running": {
+                    "$ref": "#/components/examples/TaskRunning"
+                  },
+                  "succeeded": {
+                    "$ref": "#/components/examples/TaskSucceeded"
+                  },
+                  "failed": {
+                    "$ref": "#/components/examples/TaskFailed"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/m1/foreground-mask/jobs/{task_id}/mask-edits": {
+      "post": {
+        "tags": ["foreground-mask"],
+        "operationId": "editForegroundMask",
+        "summary": "提交人工掩膜编辑",
+        "description": "当前仅支持 operation=remove，用于删除误检前景区域。坐标默认是原始图像像素坐标；如果来自缩放画布，需要同时传 display_width 和 display_height。",
+        "x-permission": "m1.foregroundMask.edit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaskEditRequest"
+              },
+              "examples": {
+                "rectangle": {
+                  "$ref": "#/components/examples/MaskEditRectangleRequest"
+                },
+                "mixed": {
+                  "$ref": "#/components/examples/MaskEditMixedRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "编辑成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaskEditResponse"
+                },
+                "examples": {
+                  "edited": {
+                    "$ref": "#/components/examples/MaskEditResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/preprocessing/foreground-mask/{task_id}/mask-edits": {
+      "post": {
+        "tags": ["preprocessing"],
+        "operationId": "editPreprocessingForegroundMask",
+        "summary": "提交前处理人工掩膜编辑",
+        "description": "推荐给前端正式业务流程使用的掩膜编辑接口，响应结构与模块级接口一致。",
+        "x-permission": "preprocessing.foregroundMask.edit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaskEditRequest"
+              },
+              "examples": {
+                "rectangle": {
+                  "$ref": "#/components/examples/MaskEditRectangleRequest"
+                },
+                "mixed": {
+                  "$ref": "#/components/examples/MaskEditMixedRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "编辑成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaskEditResponse"
+                },
+                "examples": {
+                  "edited": {
+                    "$ref": "#/components/examples/MaskEditResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/m1/foreground-mask/jobs/{task_id}/download": {
+      "get": {
+        "tags": ["foreground-mask"],
+        "operationId": "downloadForegroundMaskResult",
+        "summary": "下载任务首个掩膜结果",
+        "description": "任务成功后返回 mask_tif 或首个输出文件。前端用于下载场景；图片预览更建议使用 output_files 中的具体路径或后续文件代理接口。",
+        "x-permission": "m1.foregroundMask.download",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "文件流",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "TaskId": {
+        "name": "task_id",
+        "in": "path",
+        "required": true,
+        "description": "异步任务 ID，由创建任务接口返回。",
+        "schema": {
+          "type": "string",
+          "example": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71"
+        }
+      }
+    },
+    "schemas": {
+      "JobStatus": {
+        "type": "string",
+        "enum": ["pending", "running", "succeeded", "failed"],
+        "description": "任务状态。pending=等待执行，running=执行中，succeeded=成功，failed=失败。"
+      },
+      "ImageDataType": {
+        "type": "string",
+        "enum": ["byte", "uint16"],
+        "description": "输入图像数据类型，正式前端通常保持默认 byte。"
+      },
+      "SystemStatus": {
+        "type": "object",
+        "required": ["service", "status", "cuda_available", "cuda_device_count", "gpu_names", "default_model_profile"],
+        "properties": {
+          "service": {
+            "type": "string",
+            "enum": ["Geo-Core AI foreground mask API"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ok"]
+          },
+          "cuda_available": {
+            "type": "boolean"
+          },
+          "cuda_device_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "gpu_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "memory": {
+            "nullable": true,
+            "$ref": "#/components/schemas/MemoryInfo"
+          },
+          "default_model_profile": {
+            "type": "string",
+            "default": "default"
+          }
+        }
+      },
+      "MemoryInfo": {
+        "type": "object",
+        "properties": {
+          "total_gb": {
+            "type": "number",
+            "format": "float"
+          },
+          "available_gb": {
+            "type": "number",
+            "format": "float"
+          }
+        },
+        "additionalProperties": {
+          "type": "number"
+        }
+      },
+      "ForegroundMaskModelsResponse": {
+        "type": "object",
+        "required": ["models", "default_profile"],
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "当前算法服务可构建的模型名称。"
+          },
+          "default_profile": {
+            "type": "string",
+            "description": "前端默认使用的模型 profile。"
+          }
+        }
+      },
+      "ForegroundMaskRequest": {
+        "type": "object",
+        "required": ["input_path"],
+        "properties": {
+          "input_path": {
+            "type": "string",
+            "description": "后端可访问的图像文件路径或目录路径。"
+          },
+          "output_dir": {
+            "type": "string",
+            "nullable": true,
+            "description": "输出目录。为空时默认写入 api_runtime/outputs/{task_id}。"
+          },
+          "image_pattern": {
+            "type": "string",
+            "default": "*.tif",
+            "description": "input_path 为目录时的文件匹配规则，例如 *.tif、*.png、*.jpg。"
+          },
+          "recursive": {
+            "type": "boolean",
+            "default": false,
+            "description": "input_path 为目录时是否扫描子目录。"
+          },
+          "model_profile": {
+            "type": "string",
+            "default": "default",
+            "description": "模型包 profile，正式前端通常保持 default。"
+          },
+          "model_package": {
+            "type": "string",
+            "nullable": true,
+            "description": "显式模型包目录，正式前端通常不传。"
+          },
+          "threshold": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true,
+            "description": "前景概率阈值。为空时使用模型包配置。"
+          },
+          "enable_postprocess": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "是否启用后处理。为空时使用模型包配置。"
+          },
+          "output_preview": {
+            "type": "boolean",
+            "default": true,
+            "description": "是否输出 overlay.png 预览图。"
+          },
+          "model_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "兼容旧版临时模型加载方式，推荐前端不使用。"
+          },
+          "model_path": {
+            "type": "string",
+            "nullable": true,
+            "description": "兼容旧版直接权重路径，推荐前端不使用。"
+          },
+          "num_classes": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 2
+          },
+          "band_num": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 3
+          },
+          "label_norm": {
+            "type": "boolean",
+            "default": true
+          },
+          "train_list_path": {
+            "type": "string",
+            "nullable": true
+          },
+          "mean": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "number"
+            }
+          },
+          "std": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "number"
+            },
+            "description": "如果传入 mean，std 长度必须与 mean 一致。"
+          },
+          "target_size": {
+            "type": "integer",
+            "minimum": 16,
+            "default": 512
+          },
+          "unify_read_img": {
+            "type": "boolean",
+            "default": true
+          },
+          "overlap_rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.8,
+            "exclusiveMaximum": true,
+            "default": 0.25
+          },
+          "ignore_bandnum": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "img_data_type": {
+            "$ref": "#/components/schemas/ImageDataType"
+          },
+          "use_mask": {
+            "type": "boolean",
+            "default": false
+          },
+          "mask_path": {
+            "type": "string",
+            "nullable": true
+          },
+          "use_vsimem": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ForegroundMaskUploadRequest": {
+        "type": "object",
+        "required": ["file"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "待识别图像文件。支持 jpg、jpeg、png、tif、tiff。"
+          },
+          "model_path": {
+            "type": "string",
+            "nullable": true
+          },
+          "model_profile": {
+            "type": "string",
+            "default": "default"
+          },
+          "model_package": {
+            "type": "string",
+            "nullable": true
+          },
+          "threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true
+          },
+          "enable_postprocess": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "output_preview": {
+            "type": "boolean",
+            "default": true
+          },
+          "model_name": {
+            "type": "string",
+            "default": "UNet"
+          },
+          "num_classes": {
+            "type": "integer",
+            "default": 2,
+            "minimum": 1
+          },
+          "band_num": {
+            "type": "integer",
+            "default": 3,
+            "minimum": 1
+          },
+          "mean": {
+            "type": "string",
+            "nullable": true,
+            "description": "兼容旧版逗号分隔均值，例如 53.7,53.3,52.8。"
+          },
+          "std": {
+            "type": "string",
+            "nullable": true,
+            "description": "兼容旧版逗号分隔标准差。"
+          },
+          "target_size": {
+            "type": "integer",
+            "default": 512,
+            "minimum": 16
+          },
+          "overlap_rate": {
+            "type": "number",
+            "default": 0.25,
+            "minimum": 0,
+            "maximum": 0.8,
+            "exclusiveMaximum": true
+          },
+          "img_data_type": {
+            "$ref": "#/components/schemas/ImageDataType"
+          }
+        }
+      },
+      "TaskCreateResponse": {
+        "type": "object",
+        "required": ["task_id", "status", "status_url"],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "status_url": {
+            "type": "string",
+            "description": "任务状态查询路径。"
+          }
+        }
+      },
+      "TaskInfo": {
+        "type": "object",
+        "required": ["task_id", "status", "message", "input_paths", "output_files", "metrics", "warnings", "created_at", "updated_at"],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "message": {
+            "type": "string"
+          },
+          "input_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "output_dir": {
+            "type": "string",
+            "nullable": true
+          },
+          "output_files": {
+            "$ref": "#/components/schemas/OutputFiles"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/TaskMetrics"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "任务失败时的错误信息。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OutputFiles": {
+        "type": "object",
+        "description": "输出文件路径。单图任务常见 key 为 mask_png、mask_tif、probability_tif、overlay_png、contours_json、metadata_json；批量任务 key 会加上图像名前缀，例如 sample1.mask_png。",
+        "additionalProperties": {
+          "type": "string"
+        },
+        "example": {
+          "mask_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.png",
+          "mask_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.tif",
+          "probability_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/probability.tif",
+          "overlay_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/overlay.png",
+          "contours_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/contours.json",
+          "metadata_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/metadata.json"
+        }
+      },
+      "TaskMetrics": {
+        "type": "object",
+        "description": "任务质量指标。单图任务常见 foreground_area_ratio、component_count、elapsed_seconds；编辑响应会额外包含 selected_pixel_count、removed_pixel_count、foreground_pixel_count。",
+        "additionalProperties": {
+          "type": "number"
+        },
+        "example": {
+          "foreground_area_ratio": 0.32,
+          "component_count": 8,
+          "elapsed_seconds": 2.31
+        }
+      },
+      "MaskEditRequest": {
+        "type": "object",
+        "required": ["regions"],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": ["remove"],
+            "default": "remove",
+            "description": "当前仅支持删除误检前景区域。"
+          },
+          "regions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/MaskEditRegion"
+            }
+          },
+          "display_width": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "description": "前端预览画布宽度。如果传入，后端会把画布坐标缩放回原图坐标。"
+          },
+          "display_height": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "description": "前端预览画布高度。如果传入，后端会把画布坐标缩放回原图坐标。"
+          },
+          "result_key_prefix": {
+            "type": "string",
+            "default": "",
+            "description": "批量任务中指定某张图的输出 key 前缀，例如 sample1.。单图任务传空字符串。"
+          },
+          "output_preview": {
+            "type": "boolean",
+            "default": true,
+            "description": "编辑后是否刷新 overlay.png。"
+          }
+        }
+      },
+      "MaskEditRegion": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["rectangle", "polygon", "brush"]
+          },
+          "bbox": {
+            "type": "array",
+            "nullable": true,
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "矩形区域 [x1, y1, x2, y2]。type=rectangle 时必填。"
+          },
+          "points": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            },
+            "description": "多边形顶点或画笔路径点。type=polygon 或 brush 时必填。"
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "description": "画笔半径，单位为像素。type=brush 时可传，默认由后端使用 8。"
+          }
+        }
+      },
+      "Point": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "number"
+        },
+        "description": "[x, y] 像素坐标，原点为图像左上角。"
+      },
+      "MaskEditResponse": {
+        "type": "object",
+        "required": ["task_id", "status", "message", "output_files", "metrics", "warnings", "edited_at"],
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "message": {
+            "type": "string"
+          },
+          "output_files": {
+            "$ref": "#/components/schemas/OutputFiles"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/TaskMetrics"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edited_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["detail"],
+        "properties": {
+          "detail": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            ],
+            "description": "FastAPI 默认错误结构。参数校验错误时 detail 为数组；业务错误时通常为字符串。"
+          }
+        }
+      },
+      "ContoursDocument": {
+        "type": "object",
+        "required": ["image_width", "image_height", "component_count", "components"],
+        "properties": {
+          "image_width": {
+            "type": "integer"
+          },
+          "image_height": {
+            "type": "integer"
+          },
+          "component_count": {
+            "type": "integer"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContourComponent"
+            }
+          }
+        },
+        "description": "contours_json 指向文件的内容结构，供前端绘制轮廓和包围盒。"
+      },
+      "ContourComponent": {
+        "type": "object",
+        "required": ["component_id", "area", "bbox", "centroid", "contour"],
+        "properties": {
+          "component_id": {
+            "type": "integer"
+          },
+          "area": {
+            "type": "number"
+          },
+          "bbox": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "[x_min, y_min, x_max, y_max]"
+          },
+          "centroid": {
+            "$ref": "#/components/schemas/Point"
+          },
+          "contour": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            }
+          }
+        }
+      },
+      "MetadataDocument": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "example": "M1-2 foreground mask"
+          },
+          "model_name": {
+            "type": "string",
+            "example": "CoreMaskUNet"
+          },
+          "model_version": {
+            "type": "string",
+            "example": "v1.0.0"
+          },
+          "input_path": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "postprocess": {
+            "type": "boolean"
+          },
+          "image_width": {
+            "type": "integer"
+          },
+          "image_height": {
+            "type": "integer"
+          },
+          "foreground_area_ratio": {
+            "type": "number"
+          },
+          "component_count": {
+            "type": "integer"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "elapsed_seconds": {
+            "type": "number"
+          },
+          "manual_edit_applied": {
+            "type": "boolean"
+          },
+          "manual_edit_history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualEditHistoryItem"
+            }
+          }
+        },
+        "description": "metadata_json 指向文件的内容结构，供前端展示质量指标和人工编辑历史。"
+      },
+      "ManualEditHistoryItem": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": ["remove"]
+          },
+          "region_count": {
+            "type": "integer"
+          },
+          "selected_pixel_count": {
+            "type": "integer"
+          },
+          "removed_pixel_count": {
+            "type": "integer"
+          },
+          "edited_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "请求参数或业务数据错误，例如编辑区域不合法、缺少可编辑掩膜文件。",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "rectangle region requires bbox"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "任务不存在。",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "task_id not found"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "任务状态不允许当前操作，例如任务未成功时下载或编辑。",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "detail": "task must be succeeded before mask editing"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "FastAPI/Pydantic 参数校验错误。",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "examples": {
+      "SystemStatusOk": {
+        "value": {
+          "service": "Geo-Core AI foreground mask API",
+          "status": "ok",
+          "cuda_available": true,
+          "cuda_device_count": 1,
+          "gpu_names": ["NVIDIA GeForce RTX 4090"],
+          "memory": {
+            "total_gb": 63.83,
+            "available_gb": 41.25
+          },
+          "default_model_profile": "default"
+        }
+      },
+      "ForegroundMaskModelsOk": {
+        "value": {
+          "models": ["CoreMaskUNet", "UNet"],
+          "default_profile": "default"
+        }
+      },
+      "ForegroundMaskRequestPathInput": {
+        "value": {
+          "input_path": "D:/data/core_box_001.tif",
+          "model_profile": "default",
+          "threshold": 0.5,
+          "enable_postprocess": true,
+          "output_preview": true
+        }
+      },
+      "ForegroundMaskRequestDirectoryInput": {
+        "value": {
+          "input_path": "examples/input",
+          "image_pattern": "*.tif",
+          "recursive": false,
+          "model_profile": "default",
+          "threshold": 0.5,
+          "enable_postprocess": true,
+          "output_preview": true
+        }
+      },
+      "TaskCreated": {
+        "value": {
+          "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "status": "pending",
+          "status_url": "/api/m1/foreground-mask/jobs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71"
+        }
+      },
+      "TaskRunning": {
+        "value": {
+          "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "status": "running",
+          "message": "running foreground mask inference (1/1)",
+          "input_paths": ["examples/input/sample.tif"],
+          "output_dir": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "output_files": {},
+          "metrics": {},
+          "warnings": [],
+          "error": null,
+          "created_at": "2026-06-13T10:00:00+00:00",
+          "updated_at": "2026-06-13T10:00:01+00:00"
+        }
+      },
+      "TaskSucceeded": {
+        "value": {
+          "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "status": "succeeded",
+          "message": "foreground mask extraction completed",
+          "input_paths": ["examples/input/sample.tif"],
+          "output_dir": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "output_files": {
+            "mask_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.png",
+            "mask_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.tif",
+            "probability_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/probability.tif",
+            "overlay_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/overlay.png",
+            "contours_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/contours.json",
+            "metadata_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/metadata.json"
+          },
+          "metrics": {
+            "foreground_area_ratio": 0.32,
+            "component_count": 8,
+            "elapsed_seconds": 2.31
+          },
+          "warnings": [],
+          "error": null,
+          "created_at": "2026-06-13T10:00:00+00:00",
+          "updated_at": "2026-06-13T10:00:03+00:00"
+        }
+      },
+      "TaskFailed": {
+        "value": {
+          "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "status": "failed",
+          "message": "foreground mask extraction failed",
+          "input_paths": [],
+          "output_dir": null,
+          "output_files": {},
+          "metrics": {},
+          "warnings": [],
+          "error": "input_path does not exist: D:/missing/core_box_001.tif",
+          "created_at": "2026-06-13T10:00:00+00:00",
+          "updated_at": "2026-06-13T10:00:02+00:00"
+        }
+      },
+      "MaskEditRectangleRequest": {
+        "value": {
+          "operation": "remove",
+          "regions": [
+            {
+              "type": "rectangle",
+              "bbox": [120, 80, 260, 180]
+            }
+          ],
+          "output_preview": true
+        }
+      },
+      "MaskEditMixedRequest": {
+        "value": {
+          "operation": "remove",
+          "display_width": 1024,
+          "display_height": 512,
+          "regions": [
+            {
+              "type": "rectangle",
+              "bbox": [100, 50, 240, 180]
+            },
+            {
+              "type": "polygon",
+              "points": [[300, 120], [430, 126], [420, 230], [290, 220]]
+            },
+            {
+              "type": "brush",
+              "radius": 10,
+              "points": [[520, 200], [540, 210], [565, 220]]
+            }
+          ],
+          "output_preview": true
+        }
+      },
+      "MaskEditResponse": {
+        "value": {
+          "task_id": "8fb5e33fbc9d4d4f9a9a9bbaf64f4c71",
+          "status": "succeeded",
+          "message": "foreground mask manually edited",
+          "output_files": {
+            "mask_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.png",
+            "mask_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/mask.tif",
+            "probability_tif": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/probability.tif",
+            "overlay_png": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/overlay.png",
+            "contours_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/contours.json",
+            "metadata_json": "api_runtime/outputs/8fb5e33fbc9d4d4f9a9a9bbaf64f4c71/metadata.json"
+          },
+          "metrics": {
+            "foreground_area_ratio": 0.28,
+            "component_count": 6,
+            "selected_pixel_count": 6900,
+            "removed_pixel_count": 1556,
+            "foreground_pixel_count": 734003
+          },
+          "warnings": [],
+          "edited_at": "2026-06-13T18:03:04.566900+00:00"
+        }
+      }
+    }
+  },
+  "x-auth-and-permissions": {
+    "standalone": "当前算法模块 standalone 服务没有独立鉴权、用户隔离和任务持久化机制。",
+    "integration": "集成到主系统后，应由网关或宿主后端在进入本服务前完成登录态校验和权限校验。",
+    "permissionKeys": {
+      "m1.foregroundMask.read": "查看系统状态、模型列表、任务状态和结果路径",
+      "m1.foregroundMask.create": "创建前景掩膜任务或上传图像",
+      "m1.foregroundMask.edit": "提交人工掩膜编辑",
+      "m1.foregroundMask.download": "下载掩膜结果",
+      "preprocessing.foregroundMask.read": "在前处理业务流程中查看任务状态",
+      "preprocessing.foregroundMask.create": "在前处理业务流程中创建任务",
+      "preprocessing.foregroundMask.edit": "在前处理业务流程中编辑掩膜"
+    }
+  }
+}

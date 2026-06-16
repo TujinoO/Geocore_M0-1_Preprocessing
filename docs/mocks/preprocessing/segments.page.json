@@ -1,0 +1,98 @@
+{
+  "task_id": "pre_20260616_172814_001",
+  "page": 1,
+  "page_size": 2,
+  "total": 720,
+  "items": [
+    {
+      "segment_id": "ZKH3_132_000.00_000.10",
+      "core_box_id": "ZKH3_132_140_box_0001",
+      "hole_id": "ZKH3",
+      "depth_start_m": 132.0,
+      "depth_end_m": 132.1,
+      "depth_center_m": 132.05,
+      "length_cm": 10.0,
+      "image_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments/ZKH3_132_000.00_000.10.png",
+      "mask_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments/ZKH3_132_000.00_000.10_mask.png",
+      "source_strip_bbox": [0, 0, 233, 206],
+      "core_coverage_ratio": 0.81,
+      "missing_ratio": 0.0,
+      "quality_flags": [],
+      "grid": "reconstructed_strip",
+      "cube_ref": {
+        "manifest_path": "D:/data/fusion_result/manifest.json",
+        "cube_path": "D:/data/fusion_result/fused_cube.zarr",
+        "array": "reflectance",
+        "band_metadata": "D:/data/fusion_result/metadata/band_metadata.csv",
+        "registration_model": "D:/data/fusion_result/metadata/registration_model.json",
+        "axis_order": "y,x,band",
+        "grid": {
+          "reference": "rgb",
+          "height": 22480,
+          "width": 2048,
+          "axis_order": "y,x,band",
+          "pixel_unit": "rgb_pixel"
+        }
+      },
+      "transform_stack_ref": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_transform_stack.json",
+      "source_refs": {
+        "m0_manifest": "D:/data/fusion_result/manifest.json",
+        "m1_1_box_id": "box_0001",
+        "m1_1_corrected_image": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/corrected_boxes/box_0001.png",
+        "m1_2_output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001",
+        "m1_2_mask_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001/mask.png"
+      },
+      "bbox_corrected_box_estimate": [263, 2, 494, 210],
+      "bbox_rgb_reference_parent_box": [348, 120, 1680, 2300],
+      "band_selection": {
+        "recommended_mineral_band_count": 523,
+        "band_metadata": "D:/data/fusion_result/metadata/band_metadata.csv"
+      }
+    },
+    {
+      "segment_id": "ZKH3_132_000.10_000.20",
+      "core_box_id": "ZKH3_132_140_box_0001",
+      "hole_id": "ZKH3",
+      "depth_start_m": 132.1,
+      "depth_end_m": 132.2,
+      "depth_center_m": 132.15,
+      "length_cm": 10.0,
+      "image_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments/ZKH3_132_000.10_000.20.png",
+      "mask_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_3_separator_mark/ZKH3_132_140_box_0001/segments/ZKH3_132_000.10_000.20_mask.png",
+      "source_strip_bbox": [0, 205, 233, 411],
+      "core_coverage_ratio": 0.79,
+      "missing_ratio": 0.0,
+      "quality_flags": [],
+      "grid": "reconstructed_strip",
+      "cube_ref": {
+        "manifest_path": "D:/data/fusion_result/manifest.json",
+        "cube_path": "D:/data/fusion_result/fused_cube.zarr",
+        "array": "reflectance",
+        "band_metadata": "D:/data/fusion_result/metadata/band_metadata.csv",
+        "registration_model": "D:/data/fusion_result/metadata/registration_model.json",
+        "axis_order": "y,x,band",
+        "grid": {
+          "reference": "rgb",
+          "height": 22480,
+          "width": 2048,
+          "axis_order": "y,x,band",
+          "pixel_unit": "rgb_pixel"
+        }
+      },
+      "transform_stack_ref": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_transform_stack.json",
+      "source_refs": {
+        "m0_manifest": "D:/data/fusion_result/manifest.json",
+        "m1_1_box_id": "box_0001",
+        "m1_1_corrected_image": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_1_rotation/corrected_boxes/box_0001.png",
+        "m1_2_output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001",
+        "m1_2_mask_path": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask/box_0001/mask.png"
+      },
+      "bbox_corrected_box_estimate": [263, 210, 494, 420],
+      "bbox_rgb_reference_parent_box": [348, 120, 1680, 2300],
+      "band_selection": {
+        "recommended_mineral_band_count": 523,
+        "band_metadata": "D:/data/fusion_result/metadata/band_metadata.csv"
+      }
+    }
+  ]
+}

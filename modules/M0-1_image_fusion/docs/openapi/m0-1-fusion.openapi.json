@@ -1,0 +1,3115 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Geo-Core M0-1 Hyperspectral Optical Fusion API",
+    "version": "0.1.0",
+    "description": "前后端分离契约：M0-1 高光谱-光学影像融合算法模块的 ROI 准备、控制点人工修正、配准应用与融合任务接口。该文件只定义主后端需要封装给前端的 HTTP 契约，不要求前端直接调用算法 Python 模块。"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "主后端 API 根路径"
+    }
+  ],
+  "tags": [
+    {
+      "name": "M0-1 Capabilities",
+      "description": "模块能力与页面初始化配置"
+    },
+    {
+      "name": "M0-1 ROI",
+      "description": "ROI 裁剪与自动配准任务"
+    },
+    {
+      "name": "M0-1 Tie Points",
+      "description": "可交互控制点会话与人工编辑"
+    },
+    {
+      "name": "M0-1 Fusion Jobs",
+      "description": "融合任务提交与状态查询"
+    },
+    {
+      "name": "M0-1 Assets",
+      "description": "预览图、manifest 和质量报告等只读资产引用"
+    }
+  ],
+  "paths": {
+    "/m0-1/capabilities": {
+      "get": {
+        "tags": [
+          "M0-1 Capabilities"
+        ],
+        "summary": "获取 M0-1 模块能力",
+        "description": "页面初始化时调用。返回可选配准阶段、控制点操作、融合模式、默认参数和权限提示。",
+        "operationId": "getM01Capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:read"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion",
+          "action": "read",
+          "roles": [
+            "fusion_viewer",
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "模块能力",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/CapabilitiesResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/m0-1/roi-jobs": {
+      "post": {
+        "tags": [
+          "M0-1 ROI"
+        ],
+        "summary": "创建 ROI 准备任务",
+        "description": "提交原始 RGB/NIR/SWIR ENVI 数据目录，创建自动 ROI 裁剪和自动配准任务。长耗时实现应返回 202 与 job_id，前端通过 job_id 轮询状态。",
+        "operationId": "createM01RoiJob",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:execute"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_roi",
+          "action": "execute",
+          "roles": [
+            "fusion_operator",
+            "fusion_admin"
+          ],
+          "notes": "需要校验用户对输入数据目录和输出工作区的访问权限。"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoiJobRequest"
+              },
+              "examples": {
+                "default": {
+                  "$ref": "#/components/examples/CreateRoiJobRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "ROI 任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoiJobResponse"
+                },
+                "examples": {
+                  "running": {
+                    "$ref": "#/components/examples/RoiJobRunningResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/m0-1/roi-jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "M0-1 ROI"
+        ],
+        "summary": "查询 ROI 准备任务状态",
+        "operationId": "getM01RoiJob",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:read"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_roi",
+          "action": "read",
+          "roles": [
+            "fusion_viewer",
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ROI 任务状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoiJobResponse"
+                },
+                "examples": {
+                  "succeeded": {
+                    "$ref": "#/components/examples/RoiJobSucceededResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/m0-1/roi/{roi_id}": {
+      "get": {
+        "tags": [
+          "M0-1 ROI"
+        ],
+        "summary": "获取 ROI manifest",
+        "description": "返回已完成 ROI 的 manifest 摘要、预览图 URL 和对齐 ENVI 文件引用。",
+        "operationId": "getM01Roi",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:read"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_roi",
+          "action": "read",
+          "roles": [
+            "fusion_viewer",
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RoiId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ROI manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoiManifestResponse"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/RoiManifestResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/m0-1/tiepoint-sessions": {
+      "post": {
+        "tags": [
+          "M0-1 Tie Points"
+        ],
+        "summary": "从 ROI 创建控制点会话",
+        "description": "基于指定 ROI 和配准阶段生成可人工编辑的 tie point session，并返回结构图和上下文预览图。",
+        "operationId": "createM01TiePointSession",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:write"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_tiepoint_session",
+          "action": "create",
+          "roles": [
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTiePointSessionRequest"
+              },
+              "examples": {
+                "default": {
+                  "$ref": "#/components/examples/CreateTiePointSessionRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "控制点会话已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiePointSessionResponse"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/TiePointSessionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/m0-1/tiepoint-sessions/{session_id}": {
+      "get": {
+        "tags": [
+          "M0-1 Tie Points"
+        ],
+        "summary": "获取控制点会话",
+        "operationId": "getM01TiePointSession",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:read"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_tiepoint_session",
+          "action": "read",
+          "roles": [
+            "fusion_viewer",
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "控制点会话",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiePointSessionResponse"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/TiePointSessionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "M0-1 Tie Points"
+        ],
+        "summary": "编辑控制点会话",
+        "description": "前端提交 reject、restore、delete、add、update 操作。后端保存 session、重新计算质量统计，并按需刷新预览图。",
+        "operationId": "updateM01TiePointSession",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:write"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_tiepoint_session",
+          "action": "update",
+          "roles": [
+            "fusion_operator",
+            "fusion_admin"
+          ],
+          "audit": "必须记录用户、时间、session_id、changed_point_ids 和 operations 摘要。"
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTiePointSessionRequest"
+              },
+              "examples": {
+                "default": {
+                  "$ref": "#/components/examples/UpdateTiePointSessionRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "控制点会话已更新",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiePointSessionUpdateResponse"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/TiePointSessionUpdateResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/m0-1/tiepoint-sessions/{session_id}/apply": {
+      "post": {
+        "tags": [
+          "M0-1 Tie Points"
+        ],
+        "summary": "应用控制点会话到 ENVI 数据",
+        "description": "使用当前 active 控制点构建局部 warp 模型，并输出新的 ENVI hdr/dat。joint_hsi_to_rgb_lowres_final 阶段应对 NIR 和 SWIR 使用同一 session 分别应用，避免破坏内部对齐。",
+        "operationId": "applyM01TiePointSession",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:execute"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_tiepoint_session",
+          "action": "execute",
+          "roles": [
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyTiePointSessionRequest"
+              },
+              "examples": {
+                "default": {
+                  "$ref": "#/components/examples/ApplyTiePointSessionRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "控制点会话已应用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTiePointSessionResponse"
+                },
+                "examples": {
+                  "default": {
+                    "$ref": "#/components/examples/ApplyTiePointSessionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/m0-1/fusion-jobs": {
+      "post": {
+        "tags": [
+          "M0-1 Fusion Jobs"
+        ],
+        "summary": "创建融合任务",
+        "description": "提交 RGB/NIR/SWIR 已配准 ENVI 文件并执行融合。大尺寸任务应异步返回 job_id。",
+        "operationId": "createM01FusionJob",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:execute"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_job",
+          "action": "execute",
+          "roles": [
+            "fusion_operator",
+            "fusion_admin"
+          ],
+          "notes": "需要限制 output_dir 到当前用户有权限的工作区，禁止前端任意写服务器路径。"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFusionJobRequest"
+              },
+              "examples": {
+                "classical": {
+                  "$ref": "#/components/examples/CreateFusionJobRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "融合任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FusionJobResponse"
+                },
+                "examples": {
+                  "running": {
+                    "$ref": "#/components/examples/FusionJobRunningResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/m0-1/fusion-jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "M0-1 Fusion Jobs"
+        ],
+        "summary": "查询融合任务状态",
+        "operationId": "getM01FusionJob",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:read"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_job",
+          "action": "read",
+          "roles": [
+            "fusion_viewer",
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "融合任务状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FusionJobResponse"
+                },
+                "examples": {
+                  "succeeded": {
+                    "$ref": "#/components/examples/FusionJobSucceededResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/m0-1/assets/{asset_id}": {
+      "get": {
+        "tags": [
+          "M0-1 Assets"
+        ],
+        "summary": "读取预览图或结果资产",
+        "description": "用于访问预览 PNG、manifest、quality_report 等由后端登记过的只读资产。前端不得直接拼接服务器本地路径。",
+        "operationId": "getM01Asset",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": [
+              "m0:fusion:read"
+            ]
+          }
+        ],
+        "x-permissions": {
+          "resource": "m0_fusion_asset",
+          "action": "read",
+          "roles": [
+            "fusion_viewer",
+            "fusion_operator",
+            "fusion_admin"
+          ]
+        },
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "资产内容",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/oauth/authorize",
+            "tokenUrl": "/oauth/token",
+            "scopes": {
+              "m0:fusion:read": "读取 M0-1 模块配置、任务状态、预览资产和结果摘要",
+              "m0:fusion:write": "创建或编辑控制点会话",
+              "m0:fusion:execute": "执行 ROI 准备、配准应用和融合任务",
+              "m0:fusion:admin": "管理 M0-1 工作区、路径白名单和任务归档"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "JobId": {
+        "name": "job_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "RoiId": {
+        "name": "roi_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "SessionId": {
+        "name": "session_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "请求格式错误或业务前置条件不满足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "未认证",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "权限不足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "资源不存在",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "资源版本冲突",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "字段校验失败",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CapabilitiesResponse": {
+        "type": "object",
+        "required": [
+          "module",
+          "api_version",
+          "workflows",
+          "tie_point_stages",
+          "tie_point_operations",
+          "fusion_modes",
+          "recommended_chunk_size",
+          "permissions"
+        ],
+        "properties": {
+          "module": {
+            "type": "string",
+            "const": "M0-1"
+          },
+          "api_version": {
+            "type": "string",
+            "example": "m0_fusion_api.v1"
+          },
+          "workflows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tie_point_stages": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TiePointStage"
+            }
+          },
+          "tie_point_operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiePointOperationType"
+            }
+          },
+          "fusion_modes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FusionMode"
+            }
+          },
+          "recommended_chunk_size": {
+            "$ref": "#/components/schemas/ChunkSize"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/PermissionMatrix"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointStage": {
+        "type": "object",
+        "required": [
+          "reference_name",
+          "moving_name",
+          "description"
+        ],
+        "properties": {
+          "reference_name": {
+            "type": "string"
+          },
+          "moving_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissionMatrix": {
+        "type": "object",
+        "required": [
+          "can_read",
+          "can_write",
+          "can_execute",
+          "can_admin"
+        ],
+        "properties": {
+          "can_read": {
+            "type": "boolean"
+          },
+          "can_write": {
+            "type": "boolean"
+          },
+          "can_execute": {
+            "type": "boolean"
+          },
+          "can_admin": {
+            "type": "boolean"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateRoiJobRequest": {
+        "type": "object",
+        "required": [
+          "root",
+          "output_dir",
+          "crop_height",
+          "crop_width"
+        ],
+        "properties": {
+          "root": {
+            "type": "string",
+            "description": "原始 RGB/NIR/SWIR ENVI 文件所在目录。后端必须做路径白名单和项目权限校验。"
+          },
+          "output_dir": {
+            "type": "string",
+            "description": "后端工作区中的 ROI 输出目录。建议前端传 workspace-relative key，主后端再映射为真实路径。"
+          },
+          "crop_height": {
+            "type": "integer",
+            "minimum": 64,
+            "maximum": 8192,
+            "default": 768
+          },
+          "crop_width": {
+            "type": "integer",
+            "minimum": 64,
+            "maximum": 8192,
+            "default": 512
+          },
+          "preview_width": {
+            "type": "integer",
+            "minimum": 64,
+            "maximum": 2048,
+            "default": 256
+          },
+          "max_preview_height": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 10000,
+            "default": 3072
+          },
+          "registration_mode": {
+            "type": "string",
+            "enum": [
+              "scale_only"
+            ],
+            "default": "scale_only"
+          },
+          "local_refine": {
+            "type": "boolean",
+            "default": true
+          },
+          "anchor_nir_to_swir": {
+            "type": "boolean",
+            "default": true
+          },
+          "refine_anchored_nir": {
+            "type": "boolean",
+            "default": true
+          },
+          "local_warp": {
+            "type": "boolean",
+            "default": true
+          },
+          "final_hsi_rgb_warp": {
+            "type": "boolean",
+            "default": true
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectMetadata"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RoiJobResponse": {
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "progress",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "request": {
+            "$ref": "#/components/schemas/CreateRoiJobRequest"
+          },
+          "result": {
+            "$ref": "#/components/schemas/RoiManifestResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RoiManifestResponse": {
+        "type": "object",
+        "required": [
+          "roi_id",
+          "schema_version",
+          "source_root",
+          "output_dir",
+          "rgb_shape",
+          "nir_shape",
+          "swir_shape",
+          "registration_mode",
+          "local_warp",
+          "final_hsi_rgb_warp",
+          "crop_rgb_window",
+          "source_windows",
+          "warp_models",
+          "outputs"
+        ],
+        "properties": {
+          "roi_id": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "string",
+            "const": "m0_aligned_roi.v1"
+          },
+          "source_root": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "manifest_asset": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "rgb_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "nir_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "swir_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "registration_mode": {
+            "type": "string"
+          },
+          "local_warp": {
+            "type": "boolean"
+          },
+          "final_hsi_rgb_warp": {
+            "type": "boolean"
+          },
+          "crop_rgb_window": {
+            "$ref": "#/components/schemas/CropRgbWindow"
+          },
+          "source_windows": {
+            "$ref": "#/components/schemas/SourceWindows"
+          },
+          "warp_models": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/WarpModelSummary"
+            }
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/RoiOutputs"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImageShape2D": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "integer",
+            "minimum": 1,
+            "description": "height"
+          },
+          {
+            "type": "integer",
+            "minimum": 1,
+            "description": "width"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "ImageShape3D": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "integer",
+            "minimum": 1,
+            "description": "height"
+          },
+          {
+            "type": "integer",
+            "minimum": 1,
+            "description": "width"
+          },
+          {
+            "type": "integer",
+            "minimum": 1,
+            "description": "bands"
+          }
+        ],
+        "minItems": 3,
+        "maxItems": 3
+      },
+      "CropRgbWindow": {
+        "type": "object",
+        "required": [
+          "rgb_y0",
+          "rgb_y1",
+          "rgb_x0",
+          "rgb_x1",
+          "height",
+          "width"
+        ],
+        "properties": {
+          "rgb_y0": {
+            "type": "integer"
+          },
+          "rgb_y1": {
+            "type": "integer"
+          },
+          "rgb_x0": {
+            "type": "integer"
+          },
+          "rgb_x1": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "common_y_min": {
+            "type": "number"
+          },
+          "common_y_max": {
+            "type": "number"
+          },
+          "common_x_min": {
+            "type": "number"
+          },
+          "common_x_max": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SourceWindows": {
+        "type": "object",
+        "properties": {
+          "nir": {
+            "$ref": "#/components/schemas/SourceWindow"
+          },
+          "swir": {
+            "$ref": "#/components/schemas/SourceWindow"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SourceWindow": {
+        "type": "object",
+        "required": [
+          "source_y0",
+          "source_y1",
+          "source_x0",
+          "source_x1",
+          "height",
+          "width"
+        ],
+        "properties": {
+          "source_y0": {
+            "type": "integer"
+          },
+          "source_y1": {
+            "type": "integer"
+          },
+          "source_x0": {
+            "type": "integer"
+          },
+          "source_x1": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "local_refine": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WarpModelSummary": {
+        "type": "object",
+        "required": [
+          "method",
+          "reference_shape",
+          "moving_shape",
+          "tie_point_count",
+          "rejected_tie_point_count",
+          "mean_score"
+        ],
+        "properties": {
+          "method": {
+            "type": "string"
+          },
+          "reference_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "moving_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "approx_offset_y": {
+            "type": "number"
+          },
+          "approx_offset_x": {
+            "type": "number"
+          },
+          "approx_scale_y": {
+            "type": "number"
+          },
+          "approx_scale_x": {
+            "type": "number"
+          },
+          "tie_point_count": {
+            "type": "integer"
+          },
+          "rejected_tie_point_count": {
+            "type": "integer"
+          },
+          "median_delta_y": {
+            "type": "number"
+          },
+          "median_delta_x": {
+            "type": "number"
+          },
+          "mean_score": {
+            "type": "number"
+          },
+          "applied": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "RoiOutputs": {
+        "type": "object",
+        "required": [
+          "rgb_hdr",
+          "rgb_dat",
+          "nir_hdr",
+          "nir_dat",
+          "swir_hdr",
+          "swir_dat",
+          "previews"
+        ],
+        "properties": {
+          "rgb_hdr": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "rgb_dat": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "nir_hdr": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "nir_dat": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "swir_hdr": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "swir_dat": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "previews": {
+            "$ref": "#/components/schemas/RoiPreviewRefs"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RoiPreviewRefs": {
+        "type": "object",
+        "properties": {
+          "rgb": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "nir_registered": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "swir_registered": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "overlay_rgb_nir": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "overlay_rgb_swir": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "overlay_nir_swir": {
+            "$ref": "#/components/schemas/AssetRef"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateTiePointSessionRequest": {
+        "type": "object",
+        "required": [
+          "roi_id",
+          "stage"
+        ],
+        "properties": {
+          "roi_id": {
+            "type": "string",
+            "description": "主后端登记的 ROI 资源 ID"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/TiePointStageName"
+          },
+          "render_preview": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointSessionResponse": {
+        "type": "object",
+        "required": [
+          "session_id",
+          "session_path",
+          "session",
+          "preview_paths",
+          "preview_assets"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "session_path": {
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/TiePointSession"
+          },
+          "preview_paths": {
+            "$ref": "#/components/schemas/TiePointPreviewPaths"
+          },
+          "preview_assets": {
+            "$ref": "#/components/schemas/TiePointPreviewAssets"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointSession": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "session_id",
+          "stage",
+          "reference_name",
+          "moving_name",
+          "reference_shape",
+          "moving_shape",
+          "approx_offset_y",
+          "approx_offset_x",
+          "approx_scale_y",
+          "approx_scale_x",
+          "created_at",
+          "updated_at",
+          "metadata",
+          "quality",
+          "points"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "m0_tie_point_session.v1"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/TiePointStageName"
+          },
+          "reference_name": {
+            "type": "string"
+          },
+          "moving_name": {
+            "type": "string"
+          },
+          "reference_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "moving_shape": {
+            "$ref": "#/components/schemas/ImageShape2D"
+          },
+          "approx_offset_y": {
+            "type": "number"
+          },
+          "approx_offset_x": {
+            "type": "number"
+          },
+          "approx_scale_y": {
+            "type": "number"
+          },
+          "approx_scale_x": {
+            "type": "number"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "roi_dir": {
+                "type": "string"
+              },
+              "roi_manifest": {
+                "type": "string"
+              },
+              "stage_description": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "quality": {
+            "$ref": "#/components/schemas/TiePointQuality"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TiePoint"
+            }
+          },
+          "revision": {
+            "type": "integer",
+            "description": "建议主后端增加的乐观锁版本号，用于避免多人编辑覆盖。"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointQuality": {
+        "type": "object",
+        "required": [
+          "total_count",
+          "active_count",
+          "rejected_count",
+          "deleted_count",
+          "manual_count",
+          "mean_score",
+          "median_delta_y",
+          "median_delta_x",
+          "warnings"
+        ],
+        "properties": {
+          "total_count": {
+            "type": "integer"
+          },
+          "active_count": {
+            "type": "integer"
+          },
+          "rejected_count": {
+            "type": "integer"
+          },
+          "deleted_count": {
+            "type": "integer"
+          },
+          "manual_count": {
+            "type": "integer"
+          },
+          "mean_score": {
+            "type": "number"
+          },
+          "median_delta_y": {
+            "type": "number"
+          },
+          "median_delta_x": {
+            "type": "number"
+          },
+          "delta_y_std": {
+            "type": "number"
+          },
+          "delta_x_std": {
+            "type": "number"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "ref_y",
+          "ref_x",
+          "moving_y",
+          "moving_x",
+          "approx_y",
+          "approx_x",
+          "delta_y",
+          "delta_x",
+          "score",
+          "status",
+          "source",
+          "note"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ref_y": {
+            "type": "number"
+          },
+          "ref_x": {
+            "type": "number"
+          },
+          "moving_y": {
+            "type": "number"
+          },
+          "moving_x": {
+            "type": "number"
+          },
+          "approx_y": {
+            "type": "number"
+          },
+          "approx_x": {
+            "type": "number"
+          },
+          "delta_y": {
+            "type": "number"
+          },
+          "delta_x": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/TiePointStatus"
+          },
+          "source": {
+            "$ref": "#/components/schemas/TiePointSource"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointPreviewPaths": {
+        "type": "object",
+        "properties": {
+          "side_by_side": {
+            "type": "string"
+          },
+          "reference_overlay": {
+            "type": "string"
+          },
+          "moving_overlay": {
+            "type": "string"
+          },
+          "checkerboard": {
+            "type": "string"
+          },
+          "context_side_by_side": {
+            "type": "string"
+          },
+          "context_reference_overlay": {
+            "type": "string"
+          },
+          "context_moving_overlay": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointPreviewAssets": {
+        "type": "object",
+        "properties": {
+          "side_by_side": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "reference_overlay": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "moving_overlay": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "checkerboard": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "context_side_by_side": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "context_reference_overlay": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "context_moving_overlay": {
+            "$ref": "#/components/schemas/AssetRef"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateTiePointSessionRequest": {
+        "type": "object",
+        "required": [
+          "operations"
+        ],
+        "properties": {
+          "operations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/TiePointEditOperation"
+            }
+          },
+          "render_preview": {
+            "type": "boolean",
+            "default": true
+          },
+          "revision": {
+            "type": "integer",
+            "description": "前端读到的 revision。后端如发现不一致应返回 409。"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TiePointEditOperation": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "$ref": "#/components/schemas/TiePointOperationType"
+          },
+          "id": {
+            "type": "string"
+          },
+          "ref_y": {
+            "type": "number"
+          },
+          "ref_x": {
+            "type": "number"
+          },
+          "moving_y": {
+            "type": "number"
+          },
+          "moving_x": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "reject/restore/delete/activate 需要 id；add 需要 ref_y/ref_x/moving_y/moving_x；update 需要 id 和要修改的坐标或 note。"
+      },
+      "TiePointSessionUpdateResponse": {
+        "type": "object",
+        "required": [
+          "session_id",
+          "changed_point_ids",
+          "quality",
+          "preview_paths",
+          "preview_assets",
+          "session"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "changed_point_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quality": {
+            "$ref": "#/components/schemas/TiePointQuality"
+          },
+          "preview_paths": {
+            "$ref": "#/components/schemas/TiePointPreviewPaths"
+          },
+          "preview_assets": {
+            "$ref": "#/components/schemas/TiePointPreviewAssets"
+          },
+          "session": {
+            "$ref": "#/components/schemas/TiePointSession"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApplyTiePointSessionRequest": {
+        "type": "object",
+        "required": [
+          "input_hdr",
+          "output_hdr"
+        ],
+        "properties": {
+          "input_hdr": {
+            "type": "string"
+          },
+          "input_dat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_hdr": {
+            "type": "string"
+          },
+          "output_dat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_sensor": {
+            "type": "string",
+            "enum": [
+              "nir",
+              "swir",
+              "rgb",
+              "hsi"
+            ],
+            "description": "主后端用于审计和页面显示，不直接传给算法函数。"
+          },
+          "min_active_points": {
+            "type": "integer",
+            "minimum": 3,
+            "default": 3
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApplyTiePointSessionResponse": {
+        "type": "object",
+        "required": [
+          "session_id",
+          "output_hdr",
+          "output_dat",
+          "registration_model",
+          "quality",
+          "model"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "output_hdr": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "output_dat": {
+            "$ref": "#/components/schemas/FileRef"
+          },
+          "registration_model": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/TiePointQuality"
+          },
+          "model": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateFusionJobRequest": {
+        "type": "object",
+        "required": [
+          "rgb_hdr",
+          "nir_hdr",
+          "swir_hdr",
+          "output_dir",
+          "mode"
+        ],
+        "properties": {
+          "rgb_hdr": {
+            "type": "string"
+          },
+          "rgb_dat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nir_hdr": {
+            "type": "string"
+          },
+          "nir_dat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "swir_hdr": {
+            "type": "string"
+          },
+          "swir_dat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/FusionMode"
+          },
+          "streaming": {
+            "type": "boolean",
+            "default": true
+          },
+          "chunk_size": {
+            "$ref": "#/components/schemas/ChunkSize"
+          },
+          "export_envi": {
+            "type": "boolean",
+            "default": false
+          },
+          "write_previews": {
+            "type": "boolean",
+            "default": true
+          },
+          "fast_detail_strength": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "classical_detail_strength": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "deep_detail_strength": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "spatial_detail_strength": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "default": 0.42
+          },
+          "spatial_detail_small_radius": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": 2
+          },
+          "spatial_detail_large_radius": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": 9
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectMetadata"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FusionJobResponse": {
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "progress",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "request": {
+            "$ref": "#/components/schemas/CreateFusionJobRequest"
+          },
+          "result": {
+            "$ref": "#/components/schemas/FusionResult"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FusionResult": {
+        "type": "object",
+        "required": [
+          "output_dir",
+          "manifest",
+          "quality_report",
+          "assets"
+        ],
+        "properties": {
+          "output_dir": {
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/FusionManifest"
+          },
+          "quality_report": {
+            "$ref": "#/components/schemas/QualityReport"
+          },
+          "assets": {
+            "$ref": "#/components/schemas/FusionAssets"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FusionManifest": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "module",
+          "algorithm",
+          "algorithm_mode",
+          "algorithm_version",
+          "created_at",
+          "grid",
+          "cube",
+          "metadata",
+          "previews",
+          "compat_exports"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "m0_fusion_result.v1"
+          },
+          "module": {
+            "type": "string"
+          },
+          "algorithm": {
+            "type": "string"
+          },
+          "algorithm_mode": {
+            "$ref": "#/components/schemas/FusionMode"
+          },
+          "algorithm_version": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectMetadata"
+          },
+          "grid": {
+            "$ref": "#/components/schemas/FusionGrid"
+          },
+          "cube": {
+            "$ref": "#/components/schemas/FusionCube"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "previews": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "compat_exports": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "FusionGrid": {
+        "type": "object",
+        "required": [
+          "reference",
+          "height",
+          "width",
+          "axis_order",
+          "pixel_unit"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "axis_order": {
+            "type": "string"
+          },
+          "pixel_unit": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FusionCube": {
+        "type": "object",
+        "required": [
+          "path",
+          "array",
+          "dtype",
+          "shape",
+          "chunks",
+          "unit",
+          "storage"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "array": {
+            "type": "string"
+          },
+          "dtype": {
+            "type": "string"
+          },
+          "shape": {
+            "$ref": "#/components/schemas/ImageShape3D"
+          },
+          "chunks": {
+            "$ref": "#/components/schemas/ChunkSize"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "storage": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QualityReport": {
+        "type": "object",
+        "required": [
+          "summary",
+          "spectral",
+          "spatial",
+          "algorithm"
+        ],
+        "properties": {
+          "summary": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "spectral": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "spatial": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "algorithm": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "FusionAssets": {
+        "type": "object",
+        "properties": {
+          "manifest": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "quality_report": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "band_metadata": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "preview_rgb": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "preview_falsecolor_full": {
+            "$ref": "#/components/schemas/AssetRef"
+          },
+          "preview_mean_reflectance": {
+            "$ref": "#/components/schemas/AssetRef"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProjectMetadata": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "borehole_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "box_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "depth_start_m": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "depth_end_m": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "FileRef": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "服务器侧文件路径或工作区相对路径，仅用于后端继续处理。"
+          },
+          "asset_id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri-reference",
+            "description": "如需前端下载或预览，应返回后端授权 URL。"
+          },
+          "mime_type": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssetRef": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "path",
+          "url",
+          "mime_type"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "mime_type": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobProgress": {
+        "type": "object",
+        "required": [
+          "percent",
+          "stage",
+          "message"
+        ],
+        "properties": {
+          "percent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "stage": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChunkSize": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "integer",
+            "minimum": 1
+          },
+          {
+            "type": "integer",
+            "minimum": 1
+          },
+          {
+            "type": "integer",
+            "minimum": 1
+          }
+        ],
+        "minItems": 3,
+        "maxItems": 3
+      },
+      "TiePointStageName": {
+        "type": "string",
+        "enum": [
+          "swir_to_rgb_lowres",
+          "nir_to_swir_lowres",
+          "joint_hsi_to_rgb_lowres_final"
+        ]
+      },
+      "TiePointOperationType": {
+        "type": "string",
+        "enum": [
+          "add",
+          "update",
+          "reject",
+          "delete",
+          "activate",
+          "restore"
+        ]
+      },
+      "TiePointStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "rejected",
+          "deleted"
+        ]
+      },
+      "TiePointSource": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "auto_rejected",
+          "manual"
+        ]
+      },
+      "FusionMode": {
+        "type": "string",
+        "enum": [
+          "upsample_only",
+          "fast_preview",
+          "classical",
+          "deep_unsupervised"
+        ]
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "canceled"
+        ]
+      }
+    },
+    "examples": {
+      "CapabilitiesResponse": {
+        "value": {
+          "module": "M0-1",
+          "api_version": "m0_fusion_api.v1",
+          "workflows": [
+            "prepare_aligned_roi",
+            "create_tie_point_session",
+            "edit_tie_point_session",
+            "apply_tie_point_session_to_envi",
+            "run_fusion"
+          ],
+          "tie_point_stages": {
+            "swir_to_rgb_lowres": {
+              "reference_name": "RGB low-resolution structure",
+              "moving_name": "SWIR structure",
+              "description": "SWIR local warp to the RGB low-resolution reference grid."
+            },
+            "nir_to_swir_lowres": {
+              "reference_name": "SWIR structure",
+              "moving_name": "NIR structure",
+              "description": "NIR local warp to the already-registered SWIR grid."
+            },
+            "joint_hsi_to_rgb_lowres_final": {
+              "reference_name": "RGB low-resolution structure",
+              "moving_name": "Joint NIR+SWIR HSI structure",
+              "description": "Final joint HSI-to-RGB fine warp applied to both NIR and SWIR."
+            }
+          },
+          "tie_point_operations": [
+            "add",
+            "update",
+            "reject",
+            "delete",
+            "activate",
+            "restore"
+          ],
+          "fusion_modes": [
+            "upsample_only",
+            "fast_preview",
+            "classical",
+            "deep_unsupervised"
+          ],
+          "recommended_chunk_size": [
+            256,
+            256,
+            32
+          ],
+          "permissions": {
+            "can_read": true,
+            "can_write": true,
+            "can_execute": true,
+            "can_admin": false,
+            "roles": [
+              "fusion_operator"
+            ]
+          }
+        }
+      },
+      "CreateRoiJobRequest": {
+        "value": {
+          "root": "E:\\Experiment_data\\2026 岩心高光谱数据\\2023_09_09_14_18_58-ZKH3号-132-140-0.0_0.0-0.0_0.0",
+          "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+          "crop_height": 768,
+          "crop_width": 512,
+          "local_warp": true,
+          "final_hsi_rgb_warp": true,
+          "project": {
+            "project_id": "geo-demo",
+            "borehole_id": "ZKH3",
+            "box_id": "132-140",
+            "depth_start_m": 132,
+            "depth_end_m": 140
+          }
+        }
+      },
+      "RoiJobRunningResponse": {
+        "value": {
+          "job_id": "roi_job_20260616_001",
+          "status": "running",
+          "progress": {
+            "percent": 35,
+            "stage": "local_warp",
+            "message": "正在计算 SWIR/RGB 局部控制点"
+          },
+          "created_at": "2026-06-16T14:20:00+08:00",
+          "updated_at": "2026-06-16T14:21:10+08:00"
+        }
+      },
+      "RoiJobSucceededResponse": {
+        "value": {
+          "job_id": "roi_job_20260616_001",
+          "status": "succeeded",
+          "progress": {
+            "percent": 100,
+            "stage": "done",
+            "message": "ROI 准备完成"
+          },
+          "created_at": "2026-06-16T14:20:00+08:00",
+          "updated_at": "2026-06-16T14:26:00+08:00",
+          "result": {
+            "roi_id": "roi_ZKH3_132_140_768x512",
+            "schema_version": "m0_aligned_roi.v1",
+            "source_root": "E:\\Experiment_data\\2026 岩心高光谱数据\\2023_09_09_14_18_58-ZKH3号-132-140-0.0_0.0-0.0_0.0",
+            "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+            "manifest_asset": {
+              "asset_id": "asset_roi_manifest_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\roi_manifest.json",
+              "url": "/api/m0-1/assets/asset_roi_manifest_001",
+              "mime_type": "application/json"
+            },
+            "rgb_shape": [
+              22480,
+              2048
+            ],
+            "nir_shape": [
+              4292,
+              320
+            ],
+            "swir_shape": [
+              4341,
+              320
+            ],
+            "registration_mode": "scale_only",
+            "local_warp": true,
+            "final_hsi_rgb_warp": true,
+            "crop_rgb_window": {
+              "rgb_y0": 9560,
+              "rgb_y1": 10328,
+              "rgb_x0": 888,
+              "rgb_x1": 1400,
+              "height": 768,
+              "width": 512
+            },
+            "source_windows": {
+              "nir": {
+                "source_y0": 1906,
+                "source_y1": 2053,
+                "source_x0": 136,
+                "source_x1": 217,
+                "height": 147,
+                "width": 81
+              },
+              "swir": {
+                "source_y0": 1953,
+                "source_y1": 2102,
+                "source_x0": 139,
+                "source_x1": 220,
+                "height": 149,
+                "width": 81
+              }
+            },
+            "warp_models": {
+              "joint_hsi_to_rgb_lowres_final": {
+                "method": "joint_hsi_to_rgb_lowres_final_grid_tie_points_idw_warp",
+                "reference_shape": [
+                  149,
+                  81
+                ],
+                "moving_shape": [
+                  149,
+                  81
+                ],
+                "tie_point_count": 33,
+                "rejected_tie_point_count": 21,
+                "mean_score": 0.33442679047584534,
+                "applied": true
+              }
+            },
+            "outputs": {
+              "rgb_hdr": {
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.hdr"
+              },
+              "rgb_dat": {
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.dat"
+              },
+              "nir_hdr": {
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.hdr"
+              },
+              "nir_dat": {
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.dat"
+              },
+              "swir_hdr": {
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.hdr"
+              },
+              "swir_dat": {
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.dat"
+              },
+              "previews": {
+                "rgb": {
+                  "asset_id": "asset_roi_rgb_001",
+                  "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\previews\\roi_rgb.png",
+                  "url": "/api/m0-1/assets/asset_roi_rgb_001",
+                  "mime_type": "image/png",
+                  "width": 512,
+                  "height": 768
+                }
+              }
+            }
+          }
+        }
+      },
+      "RoiManifestResponse": {
+        "$ref": "#/components/examples/RoiJobSucceededResponse/value/result"
+      },
+      "CreateTiePointSessionRequest": {
+        "value": {
+          "roi_id": "roi_ZKH3_132_140_768x512",
+          "stage": "joint_hsi_to_rgb_lowres_final",
+          "render_preview": true
+        }
+      },
+      "TiePointSessionResponse": {
+        "value": {
+          "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+          "session_path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\session.json",
+          "preview_paths": {
+            "context_side_by_side": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_side_by_side.png",
+            "context_reference_overlay": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_reference_points.png",
+            "context_moving_overlay": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_moving_points.png",
+            "checkerboard": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png"
+          },
+          "preview_assets": {
+            "context_side_by_side": {
+              "asset_id": "asset_tp_context_side_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_context_side_by_side.png",
+              "url": "/api/m0-1/assets/asset_tp_context_side_001",
+              "mime_type": "image/png"
+            },
+            "checkerboard": {
+              "asset_id": "asset_tp_checker_001",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png",
+              "url": "/api/m0-1/assets/asset_tp_checker_001",
+              "mime_type": "image/png"
+            }
+          },
+          "session": {
+            "schema_version": "m0_tie_point_session.v1",
+            "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+            "stage": "joint_hsi_to_rgb_lowres_final",
+            "reference_name": "RGB low-resolution structure",
+            "moving_name": "Joint NIR+SWIR HSI structure",
+            "reference_shape": [
+              149,
+              81
+            ],
+            "moving_shape": [
+              149,
+              81
+            ],
+            "approx_offset_y": 0,
+            "approx_offset_x": 0,
+            "approx_scale_y": 1,
+            "approx_scale_x": 1,
+            "created_at": "2026-06-16T14:13:01+08:00",
+            "updated_at": "2026-06-16T14:13:01+08:00",
+            "metadata": {
+              "roi_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+              "roi_manifest": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\roi_manifest.json",
+              "stage_description": "Final joint HSI-to-RGB fine warp applied to both NIR and SWIR.",
+              "source": "roi_manifest"
+            },
+            "quality": {
+              "total_count": 54,
+              "active_count": 33,
+              "rejected_count": 21,
+              "deleted_count": 0,
+              "manual_count": 0,
+              "mean_score": 0.33442679047584534,
+              "median_delta_y": 0,
+              "median_delta_x": 0,
+              "delta_y_std": 1.0385698080062866,
+              "delta_x_std": 1.8673946857452393,
+              "warnings": []
+            },
+            "points": [
+              {
+                "id": "tp_0001",
+                "ref_y": 25,
+                "ref_x": 46,
+                "moving_y": 24,
+                "moving_x": 46,
+                "approx_y": 25.25,
+                "approx_x": 46.2,
+                "delta_y": -1.25,
+                "delta_x": -0.2,
+                "score": 0.4317592863588219,
+                "status": "active",
+                "source": "auto",
+                "note": ""
+              }
+            ],
+            "revision": 1
+          }
+        }
+      },
+      "UpdateTiePointSessionRequest": {
+        "value": {
+          "operations": [
+            {
+              "op": "reject",
+              "id": "tp_0001"
+            },
+            {
+              "op": "add",
+              "ref_y": 74,
+              "ref_x": 46,
+              "moving_y": 74,
+              "moving_x": 45,
+              "score": 1,
+              "note": "manual tie point"
+            }
+          ],
+          "render_preview": true,
+          "revision": 1
+        }
+      },
+      "TiePointSessionUpdateResponse": {
+        "value": {
+          "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+          "changed_point_ids": [
+            "tp_0001",
+            "tp_manual_20260616_001"
+          ],
+          "quality": {
+            "total_count": 55,
+            "active_count": 33,
+            "rejected_count": 22,
+            "deleted_count": 0,
+            "manual_count": 1,
+            "mean_score": 0.354,
+            "median_delta_y": 0,
+            "median_delta_x": 0,
+            "delta_y_std": 1.01,
+            "delta_x_std": 1.77,
+            "warnings": []
+          },
+          "preview_paths": {
+            "checkerboard": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png"
+          },
+          "preview_assets": {
+            "checkerboard": {
+              "asset_id": "asset_tp_checker_002",
+              "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\tiepoint_sessions\\joint_hsi_to_rgb_lowres_final\\previews\\joint_hsi_to_rgb_lowres_final_checkerboard.png",
+              "url": "/api/m0-1/assets/asset_tp_checker_002",
+              "mime_type": "image/png"
+            }
+          },
+          "session": {
+            "schema_version": "m0_tie_point_session.v1",
+            "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+            "stage": "joint_hsi_to_rgb_lowres_final",
+            "reference_name": "RGB low-resolution structure",
+            "moving_name": "Joint NIR+SWIR HSI structure",
+            "reference_shape": [
+              149,
+              81
+            ],
+            "moving_shape": [
+              149,
+              81
+            ],
+            "approx_offset_y": 0,
+            "approx_offset_x": 0,
+            "approx_scale_y": 1,
+            "approx_scale_x": 1,
+            "created_at": "2026-06-16T14:13:01+08:00",
+            "updated_at": "2026-06-16T14:18:44+08:00",
+            "metadata": {
+              "roi_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp",
+              "roi_manifest": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\roi_manifest.json",
+              "stage_description": "Final joint HSI-to-RGB fine warp applied to both NIR and SWIR.",
+              "source": "roi_manifest"
+            },
+            "quality": {
+              "total_count": 55,
+              "active_count": 33,
+              "rejected_count": 22,
+              "deleted_count": 0,
+              "manual_count": 1,
+              "mean_score": 0.354,
+              "median_delta_y": 0,
+              "median_delta_x": 0,
+              "delta_y_std": 1.01,
+              "delta_x_std": 1.77,
+              "warnings": []
+            },
+            "points": [
+              {
+                "id": "tp_0001",
+                "ref_y": 25,
+                "ref_x": 46,
+                "moving_y": 24,
+                "moving_x": 46,
+                "approx_y": 25.25,
+                "approx_x": 46.2,
+                "delta_y": -1.25,
+                "delta_x": -0.2,
+                "score": 0.4317592863588219,
+                "status": "rejected",
+                "source": "auto",
+                "note": ""
+              }
+            ],
+            "revision": 2
+          }
+        }
+      },
+      "ApplyTiePointSessionRequest": {
+        "value": {
+          "input_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.hdr",
+          "input_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.dat",
+          "output_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.hdr",
+          "output_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.dat",
+          "target_sensor": "nir",
+          "min_active_points": 3
+        }
+      },
+      "ApplyTiePointSessionResponse": {
+        "value": {
+          "session_id": "63d0dc9c-4c13-423e-9b1a-633f3954c3c7",
+          "output_hdr": {
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.hdr"
+          },
+          "output_dat": {
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.dat"
+          },
+          "registration_model": {
+            "asset_id": "asset_registration_model_001",
+            "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\manual_warp\\NIR_manual_warped_roi.registration_model.json",
+            "url": "/api/m0-1/assets/asset_registration_model_001",
+            "mime_type": "application/json"
+          },
+          "quality": {
+            "total_count": 55,
+            "active_count": 33,
+            "rejected_count": 22,
+            "deleted_count": 0,
+            "manual_count": 1,
+            "mean_score": 0.354,
+            "median_delta_y": 0,
+            "median_delta_x": 0,
+            "warnings": []
+          },
+          "model": {
+            "method": "grid_tie_points_idw_warp",
+            "reference_shape": [
+              149,
+              81
+            ],
+            "moving_shape": [
+              149,
+              81
+            ]
+          }
+        }
+      },
+      "CreateFusionJobRequest": {
+        "value": {
+          "rgb_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.hdr",
+          "rgb_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\RGB_aligned_roi.dat",
+          "nir_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.hdr",
+          "nir_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\NIR_aligned_roi.dat",
+          "swir_hdr": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.hdr",
+          "swir_dat": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\aligned_envi\\SWIR_aligned_roi.dat",
+          "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical",
+          "mode": "classical",
+          "streaming": true,
+          "chunk_size": [
+            256,
+            256,
+            32
+          ],
+          "spatial_detail_strength": 0.42,
+          "spatial_detail_small_radius": 2,
+          "spatial_detail_large_radius": 9,
+          "project": {
+            "project_id": "geo-demo",
+            "borehole_id": "ZKH3",
+            "box_id": "132-140",
+            "depth_start_m": 132,
+            "depth_end_m": 140
+          }
+        }
+      },
+      "FusionJobRunningResponse": {
+        "value": {
+          "job_id": "fusion_job_20260616_001",
+          "status": "running",
+          "progress": {
+            "percent": 62,
+            "stage": "write_zarr",
+            "message": "正在分块写入 fused_cube.zarr"
+          },
+          "created_at": "2026-06-16T14:30:00+08:00",
+          "updated_at": "2026-06-16T14:33:20+08:00"
+        }
+      },
+      "FusionJobSucceededResponse": {
+        "value": {
+          "job_id": "fusion_job_20260616_001",
+          "status": "succeeded",
+          "progress": {
+            "percent": 100,
+            "stage": "done",
+            "message": "融合完成"
+          },
+          "created_at": "2026-06-16T14:30:00+08:00",
+          "updated_at": "2026-06-16T14:42:01+08:00",
+          "result": {
+            "output_dir": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical",
+            "manifest": {
+              "schema_version": "m0_fusion_result.v1",
+              "module": "M0-1",
+              "algorithm": "GC-HyFuse",
+              "algorithm_mode": "classical",
+              "algorithm_version": "0.1.0",
+              "created_at": "2026-06-16T14:42:01+08:00",
+              "project": {
+                "project_id": "geo-demo",
+                "borehole_id": "ZKH3",
+                "box_id": "132-140",
+                "depth_start_m": 132,
+                "depth_end_m": 140
+              },
+              "grid": {
+                "reference": "rgb",
+                "height": 768,
+                "width": 512,
+                "axis_order": "y,x,band",
+                "pixel_unit": "rgb_pixel"
+              },
+              "cube": {
+                "path": "fused_cube.zarr",
+                "array": "reflectance",
+                "dtype": "float32",
+                "shape": [
+                  768,
+                  512,
+                  553
+                ],
+                "chunks": [
+                  256,
+                  256,
+                  32
+                ],
+                "unit": "reflectance",
+                "storage": "zarr_v2_uncompressed"
+              },
+              "metadata": {
+                "band_metadata": "metadata/band_metadata.csv",
+                "registration_model": "metadata/registration_model.json",
+                "spectral_stitch_model": "metadata/spectral_stitch_model.json",
+                "processing_config": "metadata/processing_config.json",
+                "input_metadata": "metadata/input_metadata.json",
+                "quality_report": "metrics/quality_report.json"
+              },
+              "previews": {
+                "preview_rgb": "previews/preview_rgb.png",
+                "preview_falsecolor_full": "previews/preview_falsecolor_full.png",
+                "preview_mean_reflectance": "previews/preview_mean_reflectance.png"
+              },
+              "compat_exports": {
+                "available": false
+              }
+            },
+            "quality_report": {
+              "summary": {
+                "status": "passed",
+                "notes": "Metrics are computed by degrading fused output back to original sensor grids."
+              },
+              "spectral": {
+                "nir_rmse": 0.01154863927513361,
+                "swir_rmse": 0.007237304002046585,
+                "nir_sam_mean_deg": 2.144407272338867,
+                "swir_sam_mean_deg": 0.1328057497739792,
+                "nir_band_cc_mean": 0.9974643502916608,
+                "swir_band_cc_mean": 0.9978956835610526
+              },
+              "spatial": {
+                "rgb_edge_correlation": 0.829036295413971
+              },
+              "algorithm": {
+                "mode": "classical",
+                "base_mode": "upsample_only",
+                "rank": 5,
+                "detail_strength": 0.12,
+                "spatial_detail_strength": 0.42,
+                "spatial_detail_small_radius": 2,
+                "spatial_detail_large_radius": 9,
+                "max_basis_pixels": 1000,
+                "back_projection_iters": 2
+              }
+            },
+            "assets": {
+              "manifest": {
+                "asset_id": "asset_fusion_manifest_001",
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\manifest.json",
+                "url": "/api/m0-1/assets/asset_fusion_manifest_001",
+                "mime_type": "application/json"
+              },
+              "preview_rgb": {
+                "asset_id": "asset_fusion_preview_rgb_001",
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\previews\\preview_rgb.png",
+                "url": "/api/m0-1/assets/asset_fusion_preview_rgb_001",
+                "mime_type": "image/png"
+              },
+              "quality_report": {
+                "asset_id": "asset_quality_report_001",
+                "path": "roi_outputs\\ZKH3_132_140_roi_768x512_final_hsi_rgb_warp\\fusion_classical\\metrics\\quality_report.json",
+                "url": "/api/m0-1/assets/asset_quality_report_001",
+                "mime_type": "application/json"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
