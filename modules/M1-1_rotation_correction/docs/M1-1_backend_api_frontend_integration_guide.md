@@ -258,9 +258,9 @@ Content-Type: application/json
 
 ```json
 {
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
   "expected_box_count": 9,
   "save_preview": true,
   "manual_angle_delta_deg": 0.0
@@ -292,7 +292,7 @@ Content-Type: application/json
 ### 7.3 查询当前结果
 
 ```http
-GET /api/m1-1/results?output_dir=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1
+GET /api/m1-1/results?output_dir=E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1
 ```
 
 成功响应：
@@ -310,14 +310,14 @@ GET /api/m1-1/results?output_dir=D:/Code/Geocore_M1-1_rotation_correction/output
 默认只返回 `needs_manual_review=true` 的箱体：
 
 ```http
-GET /api/m1-1/review-items?output_dir=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1
+GET /api/m1-1/review-items?output_dir=E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1
 ```
 
 响应示例：
 
 ```json
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
   "count": 2,
   "items": [
     {
@@ -344,7 +344,7 @@ GET /api/m1-1/review-items?output_dir=...&only_needs_review=false
 ### 7.5 读取图片或文件
 
 ```http
-GET /api/m1-1/file?path=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg
+GET /api/m1-1/file?path=E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1/review_sources/box_0006_source.jpg
 ```
 
 说明：
@@ -371,9 +371,9 @@ Content-Type: application/json
 
 ```json
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
   "box_id": "box_0006",
   "annotation": {
     "type": "rectangle",
@@ -447,9 +447,9 @@ Content-Type: application/json
 
 ```json
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
   "box_id": "box_0007",
   "annotation": {
     "type": "polygon",
@@ -677,4 +677,3 @@ RGB-20230909_141858-00000.hdr
 5. `metadata.json` 是当前模块的状态源，前端状态应以重新拉取的 metadata 为准。
 6. 当前后端 API 为同步阻塞调用，处理大图时前端需要显示加载状态。
 7. 如后续部署到远程服务器，必须增加文件访问权限控制；当前开发版 `/api/m1-1/file` 可读取后端本机路径。
-

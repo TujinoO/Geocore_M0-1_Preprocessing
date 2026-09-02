@@ -2,6 +2,11 @@
 runs/
 outputs/
 artifacts/
+modules/*/assets/
+modules/*/datasets/
+modules/*/qa/
+modules/*/runs/
+modules/M1-2_foreground_mask/examples/input/
 
 # Python caches and build outputs
 __pycache__/

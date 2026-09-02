@@ -15,7 +15,7 @@
       "package": "geocore_m01_fusion",
       "version": "0.1.0",
       "available": true,
-      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M0-1_image_fusion",
+      "path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M0-1_image_fusion",
       "health": "ok",
       "warnings": []
     },
@@ -25,7 +25,7 @@
       "package": "geocore_m1_1",
       "version": "0.1.0",
       "available": true,
-      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M1-1_rotation_correction",
+      "path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction",
       "health": "ok",
       "warnings": []
     },
@@ -35,7 +35,7 @@
       "package": "geocore_mask",
       "version": "1.0.0",
       "available": true,
-      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M1-2_foreground_mask",
+      "path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-2_foreground_mask",
       "health": "warning",
       "warnings": ["Model weights are stored outside the source workspace."]
     },
@@ -45,7 +45,7 @@
       "package": "geocore_m1_3",
       "version": "0.1.0",
       "available": true,
-      "path": "D:/Code/Geocore_M0and1_Preprocessing/modules/M1-3_separator_mark",
+      "path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-3_separator_mark",
       "health": "ok",
       "warnings": []
     }

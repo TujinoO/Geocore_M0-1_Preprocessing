@@ -12,10 +12,10 @@
       [0.9999731328638828, -0.007330317209460741, 18.2201],
       [0.007330317209460741, 0.9999731328638828, 0.1342]
     ],
-    "output_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/corrected_boxes/box_0006.png",
-    "output_mask": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/masks/box_0006_mask.png",
-    "preview_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/previews/box_0006_before_after.jpg",
-    "review_source_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg",
+    "output_image": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/corrected_boxes/box_0006.png",
+    "output_mask": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/masks/box_0006_mask.png",
+    "preview_image": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/previews/box_0006_before_after.jpg",
+    "review_source_image": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/review_sources/box_0006_source.jpg",
     "source_crop_bbox_raw": [316, 11692, 1795, 14207],
     "correction_status": "manual",
     "manual_annotation": {

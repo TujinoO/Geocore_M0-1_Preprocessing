@@ -116,3 +116,33 @@ geocore_mask/
 为了降低迁移风险，API 仍兼容旧的 ad-hoc 请求字段，例如 `model_path`、`model_name`、`mean`、`std`、`target_size` 和 `overlap_rate`。正式发布时建议使用 `model_profile` 或 `model_package`，不要让前端传入训练细节。
 
 当前默认发布模型 `CoreMaskUNet` 已内置在 `geocore_mask/models/core_unet.py`，不再依赖旧 `networks/` 目录。
+
+## 合并后的训练与 QA 资产
+
+- 模型源码：`geocore_mask/models/`。
+- V1/V2 模型包：`models/core_mask_unet_v1/`、`models/core_mask_unet_v2/`。
+- 标注、SHP 来源、训练划分和候选图像：`datasets/`。
+- 历史批量验证：`qa/legacy_outputs_20260714/`。
+- API 烟测：`qa/legacy_api_runtime_outputs_20260714/`。
+- 小型独立推理输入：`examples/input/`。
+
+在本模块目录中独立重新训练：
+
+```powershell
+$RunRoot = "E:\Experiment_data\GeoCore_Preprocessing_Runs"
+python tools/train_core_mask.py `
+  --config configs/train_core_mask_v2.json `
+  --base-package models/core_mask_unet_v1 `
+  --output-package "$RunRoot\M1-2\models\core_mask_unet_v2_candidate"
+```
+
+独立批量推理：
+
+```powershell
+python tools/predict_core_mask_batch.py `
+  --input-dir datasets/corrected_boxes `
+  --output-dir "$RunRoot\M1-2\core_mask_v2_regression" `
+  --model-package models/core_mask_unet_v2
+```
+
+现有数据集只有少量岩心箱，适合工程复现和继续标注，不足以证明跨钻孔泛化；重新训练后必须按钻孔/岩心箱独立划分测试集，不能仅凭训练集或同箱切片指标替换正式模型。

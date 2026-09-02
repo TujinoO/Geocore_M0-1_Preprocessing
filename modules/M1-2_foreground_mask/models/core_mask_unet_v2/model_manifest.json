@@ -1,0 +1,49 @@
+{
+  "model_name": "CoreMaskUNet",
+  "model_version": "v2.0.0-finetuned",
+  "task": "M1-2 foreground mask",
+  "framework": "pytorch",
+  "num_classes": 2,
+  "weights": "weights.pth",
+  "input": {
+    "channels": 3,
+    "image_size": 512,
+    "mean": [
+      53.7393,
+      53.329227,
+      52.893757
+    ],
+    "std": [
+      12.786107,
+      14.0913315,
+      15.2901
+    ]
+  },
+  "inference": {
+    "threshold": 0.5,
+    "tile_size": 512,
+    "overlap": 0.25,
+    "device": "auto"
+  },
+  "postprocess": {
+    "enable": true,
+    "min_component_area": 100,
+    "fill_hole_area": 500,
+    "smooth_kernel_size": 3,
+    "keep_top_k": null,
+    "max_contour_points": 800,
+    "min_area_ratio_warning": 0.005,
+    "max_area_ratio_warning": 0.85,
+    "max_component_count_warning": 200
+  },
+  "training": {
+    "source_config": "D:\\Code\\Geocore_M1-2_foreground_mask\\configs\\train_core_mask_v2.json",
+    "base_package": "D:\\Code\\Geocore_M1-2_foreground_mask\\models\\core_mask_unet_v1",
+    "train_sample_count": 2,
+    "epochs": 30,
+    "batch_size": 2,
+    "learning_rate": 0.0002,
+    "steps_per_epoch": 32,
+    "device": "cuda"
+  }
+}

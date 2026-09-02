@@ -1,0 +1,17 @@
+{
+  "SchemaVersion": "1.0",
+  "CleanupStatus": "PASS",
+  "CompletedAt": "2026-09-02T13:11:26.4970741+08:00",
+  "Workspace": "E:\\Code\\Geocore_M0&1_Preprocessing",
+  "ReviewFolder": "E:\\Code\\_DELETE_REVIEW_Geocore_M0and1_Preprocessing_20260902",
+  "MappingCount": 20,
+  "MovedFileCount": 270,
+  "MovedBytes": 72525143,
+  "GeneratedSmokeRunFileCount": 175,
+  "RegenerableCacheFileCount": 95,
+  "HashMismatchCount": 0,
+  "SourceStillExistsCount": 0,
+  "MissingTargetCount": 0,
+  "DirectDeletionCount": 0,
+  "ReadyForManualDelete": true
+}

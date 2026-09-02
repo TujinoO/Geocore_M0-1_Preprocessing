@@ -10,14 +10,15 @@ from geocore_m1_1.review import manual_correct_box
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SAMPLE_ROOT = ROOT / "assets" / "legacy_rgb_20230909"
 
 
 class ManualReviewTests(unittest.TestCase):
     def test_manual_rectangle_updates_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             result = run_m11_rotation_correction(
-                input_path=str(ROOT / "RGB-20230909_141858-00000.dat"),
-                hdr_path=str(ROOT / "RGB-20230909_141858-00000.hdr"),
+                input_path=str(SAMPLE_ROOT / "RGB-20230909_141858-00000.dat"),
+                hdr_path=str(SAMPLE_ROOT / "RGB-20230909_141858-00000.hdr"),
                 output_dir=tmp,
                 config=M11Config(save_previews=False, expected_box_count=9),
             )
@@ -34,8 +35,8 @@ class ManualReviewTests(unittest.TestCase):
             }
             updated = manual_correct_box(
                 output_dir=tmp,
-                input_path=str(ROOT / "RGB-20230909_141858-00000.dat"),
-                hdr_path=str(ROOT / "RGB-20230909_141858-00000.hdr"),
+                input_path=str(SAMPLE_ROOT / "RGB-20230909_141858-00000.dat"),
+                hdr_path=str(SAMPLE_ROOT / "RGB-20230909_141858-00000.hdr"),
                 box_id="box_0006",
                 annotation=annotation,
             )

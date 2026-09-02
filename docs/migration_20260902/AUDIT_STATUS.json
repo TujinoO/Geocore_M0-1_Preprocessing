@@ -1,0 +1,18 @@
+﻿{
+    "SchemaVersion":  "1.0",
+    "AuditStatus":  "PASS",
+    "CompletedAt":  "2026-09-02T12:43:01.1924489+08:00",
+    "ConsolidatedWorkspace":  "E:\\Code\\Geocore_M0\u00261_Preprocessing",
+    "MoveMappingCount":  40,
+    "MigratedFileCount":  465,
+    "MigratedBytes":  536853133,
+    "HashMismatchCount":  0,
+    "SourceStillExistsCount":  0,
+    "MissingMappingTargetCount":  0,
+    "LegacyRemainderFileCount":  1277,
+    "LegacyRemainderBytes":  3627200604,
+    "UnexpectedRemainderCount":  0,
+    "ReadyForManualDeleteFolderCount":  4,
+    "DirectDeletionCount":  0,
+    "Boundary":  "Maintainable source, unique models, training assets, compact QA, and regression samples were migrated. Large Zarr fusion cubes, generated test outputs, and bytecode caches remain only in legacy folders and are documented as regenerable/redundant."
+}

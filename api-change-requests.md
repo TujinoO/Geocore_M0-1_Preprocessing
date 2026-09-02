@@ -15,7 +15,7 @@
 四个算法模块已经汇总到：
 
 ```text
-D:\Code\Geocore_M0and1_Preprocessing
+E:\Code\Geocore_M0&1_Preprocessing
 ```
 
 并通过 `geocore_preprocessing.pipeline.run_preprocessing_pipeline` 打通：

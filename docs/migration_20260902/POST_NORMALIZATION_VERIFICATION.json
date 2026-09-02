@@ -1,0 +1,24 @@
+{
+  "SchemaVersion": "1.0",
+  "VerificationStatus": "PASS",
+  "CompletedAt": "2026-09-02T13:13:23.0996860+08:00",
+  "MigratedFileCount": 465,
+  "CurrentFileCount": 465,
+  "CurrentBytes": 536853209,
+  "UnchangedFileCount": 462,
+  "IntentionalPathNormalizationCount": 3,
+  "IntentionalPathNormalizationMappings": [
+    "M001",
+    "M002",
+    "M003"
+  ],
+  "MissingFileCount": 0,
+  "UnexpectedChangeCount": 0,
+  "MissingExpectedNormalizationCount": 0,
+  "SourceStillExistsCount": 0,
+  "MissingMappingTargetCount": 0,
+  "LegacyPathReferenceCountInNormalizedScripts": 0,
+  "RestoreManifestReady": true,
+  "DirectDeletionCount": 0,
+  "Boundary": "Three migrated M0-1 scripts were intentionally normalized after their move. All other migrated files must remain byte-identical to the migration-time SHA-256 manifest."
+}

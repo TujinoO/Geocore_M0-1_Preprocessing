@@ -31,3 +31,15 @@ python -m geocore_m1_3.cli segment-depth `
 - 支持 5 列默认槽位检测，也可配置列数、列顺序和列方向。
 - 支持箱外误检剔除、岩心列重建、线性深度映射、固定长度/重叠图斑切分。
 - 提供 CLI 和可选 FastAPI 适配层。
+
+## 合并后的独立维护资产
+
+- 历史完整烟测输出：`qa/legacy_outputs_20260714/smoke_box_0008/`。
+- 新运行输出应写入综合项目外任务目录，不覆盖既有 QA。
+- 本模块为确定性布局、重建和深度映射算法，不包含训练权重；修改后应运行：
+
+```powershell
+python -m unittest discover -s tests
+```
+
+并用历史 `smoke_box_0008` 的 `lane_detection.json`、`depth_mapping.json`、`segments.json` 和 `quality_report.json` 做结构及行为回归比较。

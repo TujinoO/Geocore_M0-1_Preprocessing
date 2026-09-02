@@ -19,7 +19,7 @@
   },
   "m1_2": {
     "engine": "model",
-    "model_package": "D:/Code/Geocore_M1-2_foreground_mask/models/core_mask_unet_v1",
+    "model_package": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-2_foreground_mask/models/core_mask_unet_v1",
     "threshold": 0.5,
     "enable_postprocess": true
   },

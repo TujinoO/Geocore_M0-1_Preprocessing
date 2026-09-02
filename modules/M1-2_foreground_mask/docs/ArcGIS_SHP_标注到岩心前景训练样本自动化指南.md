@@ -26,7 +26,7 @@
 建议每批新数据建立一个独立数据集目录，例如：
 
 ```text
-D:\Code\Geocore_M1-2_foreground_mask\datasets\core_mask_v2\
+E:\Code\Geocore_M0&1_Preprocessing\modules\M1-2_foreground_mask\datasets\core_mask_v2\
   images\
     box_0001.png
     box_0002.png

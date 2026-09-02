@@ -88,7 +88,7 @@ python -m geocore_preprocessing.cli run `
   --depth-start-m 132.0 `
   --depth-end-m 140.0 `
   --m1-2-engine model `
-  --m1-2-model-package D:\Code\Geocore_M1-2_foreground_mask\models\core_mask_unet_v1
+  --m1-2-model-package E:\Code\Geocore_M0&1_Preprocessing\modules\M1-2_foreground_mask\models\core_mask_unet_v1
 ```
 
 Use full-resolution M1-1 input when the M0 preview is only a display pyramid:
@@ -102,5 +102,5 @@ python -m geocore_preprocessing.cli run `
   --depth-start-m 132.0 `
   --depth-end-m 140.0 `
   --m1-2-engine model `
-  --m1-2-model-package D:\Code\Geocore_M1-2_foreground_mask\models\core_mask_unet_v1
+  --m1-2-model-package E:\Code\Geocore_M0&1_Preprocessing\modules\M1-2_foreground_mask\models\core_mask_unet_v1
 ```

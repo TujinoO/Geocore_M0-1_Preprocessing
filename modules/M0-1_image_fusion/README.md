@@ -22,7 +22,8 @@ The module writes the output contract described in the design document:
 ## Quick Demo
 
 ```powershell
-python -m geocore_m01_fusion.cli --demo --mode classical --output runs/demo_classical
+$RunRoot = "E:\Experiment_data\GeoCore_Preprocessing_Runs"
+python -m geocore_m01_fusion.cli --demo --mode classical --output "$RunRoot\M0-1\demo_classical"
 ```
 
 Run all smoke tests:
@@ -47,7 +48,7 @@ python -m geocore_m01_fusion.cli `
   --nir-dat "E:\...\NIR-20230909_141902-00000.dat" `
   --swir-hdr "E:\...\SWIR-20230909_141858-00000.hdr" `
   --swir-dat "E:\...\SWIR-20230909_141858-00000.dat" `
-  --output "runs\ZKH3_132_140_classical_streaming" `
+  --output "$RunRoot\M0-1\ZKH3_132_140_classical_streaming" `
   --chunk-size 256 256 32
 ```
 
@@ -71,10 +72,20 @@ testing fusion modes. The current default follows a tie-points workflow:
 ```powershell
 python -m geocore_m01_fusion.roi_cli `
   --root "E:\Experiment_data\2026 岩心高光谱数据\...\2023_09_09_14_18_58-ZKH3号-132-140-0.0_0.0-0.0_0.0" `
-  --output "roi_outputs\ZKH3_132_140_roi_768x512_tiepoints_warp" `
+  --output "$RunRoot\M0-1\ZKH3_132_140_roi_768x512_tiepoints_warp" `
   --crop-height 768 `
   --crop-width 512
 ```
 
 The output `roi_manifest.json` records generated tie points, rejected tie
 points, and local warp statistics.
+
+## Consolidated Assets and Independent Maintenance
+
+- Maintainable source remains under `src/geocore_m01_fusion/`.
+- Unique legacy diagnostic scripts are under `scripts/legacy_registration_20260717/`.
+- Compact aligned ENVI regression inputs are under `assets/legacy_zkh3_132_140/aligned_envi/`.
+- Run manifests, processing metadata, metrics, previews, and tie-point QA are under `qa/legacy_registration_20260717/`.
+- Four historical `fused_cube.zarr` variants were not migrated: they are generated outputs that can be reproduced from the aligned ENVI inputs and preserved run metadata.
+
+Run this module independently from its directory after adding `src` to `PYTHONPATH`. Write new results to an external task directory such as `$RunRoot`; do not place them in the repository, `assets`, or `qa`.

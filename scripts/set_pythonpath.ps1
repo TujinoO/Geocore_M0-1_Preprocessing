@@ -1,4 +1,4 @@
-$WorkspaceRoot = "D:\Code\Geocore_M0and1_Preprocessing"
+$WorkspaceRoot = Split-Path -Parent $PSScriptRoot
 $ModulePaths = @(
   "$WorkspaceRoot\modules\M0-1_image_fusion\src",
   "$WorkspaceRoot\modules\M1-1_rotation_correction",

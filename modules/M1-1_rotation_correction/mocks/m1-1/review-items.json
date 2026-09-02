@@ -1,5 +1,5 @@
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
+  "output_dir": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1",
   "count": 1,
   "items": [
     {
@@ -14,10 +14,10 @@
         [0.9999505153082835, -0.009948212638374504, 25.04647132228024],
         [0.009948212638374504, 0.9999505153082835, 0.20552375375541487]
       ],
-      "output_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/corrected_boxes/box_0006.png",
-      "output_mask": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/masks/box_0006_mask.png",
-      "preview_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/previews/box_0006_before_after.jpg",
-      "review_source_image": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg",
+      "output_image": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/corrected_boxes/box_0006.png",
+      "output_mask": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/masks/box_0006_mask.png",
+      "preview_image": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/previews/box_0006_before_after.jpg",
+      "review_source_image": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/review_sources/box_0006_source.jpg",
       "source_crop_bbox_raw": [316, 11692, 1795, 14207],
       "correction_status": "auto"
     }

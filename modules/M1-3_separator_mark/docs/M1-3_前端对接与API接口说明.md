@@ -888,8 +888,8 @@ M3 自动分层建议使用：
 
 ```powershell
 python -m geocore_m1_3.cli segment-depth `
-  --m1-2-output-dir "D:\Code\Geocore_M1-2_foreground_mask\outputs\core_mask_v2_corrected_boxes\box_0008" `
-  --output-dir "D:\Code\Geocore_M1-3_separator_mark\outputs" `
+  --m1-2-output-dir "E:\Code\Geocore_M0&1_Preprocessing\modules\M1-2_foreground_mask\qa\legacy_outputs_20260714\core_mask_v2_corrected_boxes\box_0008" `
+  --output-dir "E:\Experiment_data\GeoCore_Preprocessing_Runs\M1-3" `
   --hole-id DH001 `
   --core-box-id BOX_0008 `
   --depth-start-m 0 `

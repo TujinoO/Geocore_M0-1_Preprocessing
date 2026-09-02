@@ -18,7 +18,7 @@ M0-1 模块负责岩心 RGB 可见光影像、NIR 近红外高光谱影像、SWI
 模块源码位于：
 
 ```text
-D:\Code\Geocore_M0-1_image_fusion\src\geocore_m01_fusion
+E:\Code\Geocore_M0&1_Preprocessing\modules\M0-1_image_fusion\src\geocore_m01_fusion
 ```
 
 ## 2. 推荐整体工作流
@@ -236,7 +236,7 @@ from geocore_m01_fusion import prepare_aligned_roi_job
 
 result = prepare_aligned_roi_job(
     root=r"E:\Experiment_data\...\raw_triplet_dir",
-    output_dir=r"D:\Code\Geocore_M0-1_image_fusion\roi_outputs\ZKH3_roi",
+    output_dir=r"E:\Experiment_data\GeoCore_Preprocessing_Runs\M0-1\ZKH3_roi",
     crop_height=768,
     crop_width=512,
     local_warp=True,
@@ -252,7 +252,7 @@ result = prepare_aligned_roi_job(
 from geocore_m01_fusion import create_tie_point_session_from_roi
 
 result = create_tie_point_session_from_roi(
-    roi_dir=r"D:\Code\Geocore_M0-1_image_fusion\roi_outputs\ZKH3_roi",
+    roi_dir=r"E:\Experiment_data\GeoCore_Preprocessing_Runs\M0-1\ZKH3_roi",
     stage="joint_hsi_to_rgb_lowres_final",
 )
 ```
@@ -378,7 +378,7 @@ Content-Type: application/json
 ```json
 {
   "root": "E:\\Experiment_data\\...\\raw_triplet_dir",
-  "output_dir": "D:\\Code\\Geocore_M0-1_image_fusion\\roi_outputs\\ZKH3_roi",
+  "output_dir": "E:\\Experiment_data\\GeoCore_Preprocessing_Runs\\M0-1\\ZKH3_roi",
   "crop_height": 768,
   "crop_width": 512,
   "local_warp": true,
@@ -406,7 +406,7 @@ Content-Type: application/json
 
 ```json
 {
-  "roi_dir": "D:\\Code\\Geocore_M0-1_image_fusion\\roi_outputs\\ZKH3_roi",
+  "roi_dir": "E:\\Experiment_data\\GeoCore_Preprocessing_Runs\\M0-1\\ZKH3_roi",
   "stage": "joint_hsi_to_rgb_lowres_final"
 }
 ```
@@ -742,7 +742,7 @@ Content-Type: application/json
 ### 12.1 查询 API 能力
 
 ```powershell
-$env:PYTHONPATH='D:\Code\Geocore_M0-1_image_fusion\src'
+$env:PYTHONPATH='E:\Code\Geocore_M0&1_Preprocessing\modules\M0-1_image_fusion\src'
 D:\Users\anaconda\envs\geomanager\python.exe -m geocore_m01_fusion.tiepoints_cli api-summary
 ```
 

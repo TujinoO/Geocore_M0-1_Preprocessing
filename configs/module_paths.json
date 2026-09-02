@@ -1,6 +1,6 @@
 {
   "schema_version": "geocore_preprocessing_modules.v1",
-  "workspace_root": "D:/Code/Geocore_M0and1_Preprocessing",
+  "workspace_root": ".",
   "modules": {
     "M0-1": {
       "name": "image_fusion",

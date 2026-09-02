@@ -14,10 +14,11 @@
 ## 运行
 
 ```powershell
+$RunRoot = "E:\Experiment_data\GeoCore_Preprocessing_Runs"
 python -m geocore_m1_1.cli `
-  --input RGB-20230909_141858-00000.dat `
-  --hdr RGB-20230909_141858-00000.hdr `
-  --output outputs/m1_1 `
+  --input assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat `
+  --hdr assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr `
+  --output "$RunRoot\M1-1\m1_1" `
   --expected-box-count 9
 ```
 
@@ -25,9 +26,9 @@ python -m geocore_m1_1.cli `
 
 ```powershell
 & "C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" -m geocore_m1_1.cli `
-  --input RGB-20230909_141858-00000.dat `
-  --hdr RGB-20230909_141858-00000.hdr `
-  --output outputs/m1_1 `
+  --input assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat `
+  --hdr assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr `
+  --output "$RunRoot\M1-1\m1_1" `
   --expected-box-count 9
 ```
 
@@ -68,9 +69,9 @@ Content-Type: application/json
 
 ```json
 {
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
   "expected_box_count": 9,
   "save_preview": true
 }
@@ -81,13 +82,13 @@ Content-Type: application/json
 ### 3. 查询处理结果
 
 ```http
-GET /api/m1-1/results?output_dir=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1
+GET /api/m1-1/results?output_dir=E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1
 ```
 
 ### 4. 查询待人工复核项
 
 ```http
-GET /api/m1-1/review-items?output_dir=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1
+GET /api/m1-1/review-items?output_dir=E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1
 ```
 
 如需返回全部箱体：
@@ -109,9 +110,9 @@ Content-Type: application/json
 
 ```json
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
   "box_id": "box_0006",
   "annotation": {
     "type": "rectangle",
@@ -129,9 +130,9 @@ Content-Type: application/json
 
 ```json
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
   "box_id": "box_0007",
   "annotation": {
     "type": "polygon",
@@ -150,7 +151,7 @@ Content-Type: application/json
 ### 6. 读取输出文件
 
 ```http
-GET /api/m1-1/file?path=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg
+GET /api/m1-1/file?path=E:/Experiment_data/GeoCore_Preprocessing_Runs/M1-1/m1_1/review_sources/box_0006_source.jpg
 ```
 
 ## 测试
@@ -158,3 +159,21 @@ GET /api/m1-1/file?path=D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/re
 ```powershell
 python -m unittest discover -s tests
 ```
+
+## 合并后的独立维护资产
+
+- 完整 ENVI 回归样例：`assets/legacy_rgb_20230909/`。
+- 既有自动校正与人工复核 QA：`qa/legacy_outputs_20260714/`。
+- 新运行输出统一写入综合项目外的任务目录，不覆盖 `qa/`。
+
+独立回归示例：
+
+```powershell
+python -m geocore_m1_1.cli `
+  --input assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat `
+  --hdr assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr `
+  --output "$RunRoot\M1-1\regression_20230909" `
+  --expected-box-count 9
+```
+
+本模块是确定性几何校正算法，不包含需要训练的模型；日后调整应复跑单元测试和上述 ENVI 回归样例，并与 `qa/legacy_outputs_20260714/metadata.json`、预览和复核结果比较。

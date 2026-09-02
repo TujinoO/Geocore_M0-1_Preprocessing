@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from .pipeline import inspect_manifest, run_preprocessing_pipeline
-from .paths import load_module_config
+from .paths import load_module_config, workspace_root
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
@@ -18,7 +18,7 @@ def _load_module_config() -> dict:
 
 def cmd_modules(_: argparse.Namespace) -> int:
     config = _load_module_config()
-    root = Path(config["workspace_root"])
+    root = workspace_root(config)
     for module_id, module in config["modules"].items():
         path = root / module["path"]
         python_path = root / module["python_path"]

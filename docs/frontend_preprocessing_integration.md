@@ -15,13 +15,13 @@
 本项目的接口契约文件是：
 
 ```text
-D:\Code\Geocore_M0and1_Preprocessing\docs\openapi\preprocessing.openapi.json
+E:\Code\Geocore_M0&1_Preprocessing\docs\openapi\preprocessing.openapi.json
 ```
 
 mock 示例目录是：
 
 ```text
-D:\Code\Geocore_M0and1_Preprocessing\docs\mocks\preprocessing
+E:\Code\Geocore_M0&1_Preprocessing\docs\mocks\preprocessing
 ```
 
 ## 二、业务功能总览

@@ -44,7 +44,7 @@
     "engine": {
       "engine_requested": "model",
       "engine_used": "model",
-      "model_package": "D:/Code/Geocore_M1-2_foreground_mask/models/core_mask_unet_v1",
+      "model_package": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-2_foreground_mask/models/core_mask_unet_v1",
       "warnings": []
     },
     "output_dir": "D:/data/preprocessing_runs/ZKH3_132_140_20260616/m1_2_foreground_mask"

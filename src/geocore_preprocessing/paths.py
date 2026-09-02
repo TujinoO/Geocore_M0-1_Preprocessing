@@ -14,23 +14,33 @@ def load_module_config() -> dict[str, Any]:
     return json.loads(MODULE_CONFIG.read_text(encoding="utf-8"))
 
 
+def workspace_root(config: dict[str, Any] | None = None) -> Path:
+    """Resolve the consolidated workspace independently of its drive or checkout name."""
+
+    config = config or load_module_config()
+    configured = Path(str(config.get("workspace_root", ".")))
+    if not configured.is_absolute():
+        configured = WORKSPACE_ROOT / configured
+    return configured.resolve()
+
+
 def module_path(module_id: str) -> Path:
     config = load_module_config()
     module = config["modules"][module_id]
-    return Path(config["workspace_root"]) / module["path"]
+    return workspace_root(config) / module["path"]
 
 
 def module_python_path(module_id: str) -> Path:
     config = load_module_config()
     module = config["modules"][module_id]
-    return Path(config["workspace_root"]) / module["python_path"]
+    return workspace_root(config) / module["python_path"]
 
 
 def bootstrap_module_paths() -> list[Path]:
     """Add migrated module package roots to sys.path for in-process orchestration."""
 
     config = load_module_config()
-    root = Path(config["workspace_root"])
+    root = workspace_root(config)
     paths = [WORKSPACE_ROOT / "src"]
     for module in config["modules"].values():
         paths.append(root / module["python_path"])
@@ -47,9 +57,8 @@ def bootstrap_module_paths() -> list[Path]:
 def find_m12_model_package(explicit: str | None = None, profile: str = "core_mask_unet_v1") -> Path | None:
     """Resolve a foreground-mask model package.
 
-    The code/docs were migrated into this workspace, while large model weights
-    may remain in the original module directory. This resolver checks both
-    places and still allows callers to provide an explicit package path.
+    Model weights, cards, manifests, and training assets are consolidated under
+    the M1-2 module. Callers may still provide an explicit package path.
     """
 
     candidates: list[Path] = []
@@ -58,9 +67,7 @@ def find_m12_model_package(explicit: str | None = None, profile: str = "core_mas
     candidates.extend(
         [
             module_path("M1-2") / "models" / profile,
-            Path("D:/Code/Geocore_M1-2_foreground_mask/models") / profile,
             module_path("M1-2") / "models" / "core_mask_unet_v2",
-            Path("D:/Code/Geocore_M1-2_foreground_mask/models/core_mask_unet_v2"),
         ]
     )
     for candidate in candidates:

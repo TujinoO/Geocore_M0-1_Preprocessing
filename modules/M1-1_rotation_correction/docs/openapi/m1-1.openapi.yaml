@@ -231,7 +231,7 @@ paths:
           description: 服务器本机文件路径。前端传参时必须使用 encodeURIComponent。
           schema:
             type: string
-          example: D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1/review_sources/box_0006_source.jpg
+          example: E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1/review_sources/box_0006_source.jpg
       responses:
         "200":
           description: 文件二进制内容
@@ -267,7 +267,7 @@ components:
       schema:
         type: string
         default: outputs/m1_1
-      example: D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1
+      example: E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1
   responses:
     Error:
       description: 错误响应

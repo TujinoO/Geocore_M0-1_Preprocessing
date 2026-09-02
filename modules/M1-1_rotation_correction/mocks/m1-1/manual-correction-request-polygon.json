@@ -1,7 +1,7 @@
 {
-  "output_dir": "D:/Code/Geocore_M1-1_rotation_correction/outputs/m1_1",
-  "input_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.dat",
-  "hdr_path": "D:/Code/Geocore_M1-1_rotation_correction/RGB-20230909_141858-00000.hdr",
+  "output_dir": "E:/Code/Geocore_M0&1_Preprocessing/runs/M1-1/m1_1",
+  "input_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.dat",
+  "hdr_path": "E:/Code/Geocore_M0&1_Preprocessing/modules/M1-1_rotation_correction/assets/legacy_rgb_20230909/RGB-20230909_141858-00000.hdr",
   "box_id": "box_0007",
   "annotation": {
     "type": "polygon",
