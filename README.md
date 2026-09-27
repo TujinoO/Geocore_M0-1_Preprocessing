@@ -11,7 +11,7 @@
 - `M1-2_foreground_mask`：岩心柱体前景掩膜。
 - `M1-3_separator_mark`：岩心柱体分割与深度标记。
 
-当前目标不是把四个模块揉成一个不可维护的大文件，而是在汇总项目中建立统一的数据契约、调用入口、OpenAPI、mock 和前后端协作规范。四个算法模块仍保留清晰边界，预处理总管道负责把它们接成一条稳定流程。
+四个算法模块保留清晰边界，统一入口负责串联。2026-09-28 的工程核查、真实样例结果及尚未完成的验收条件见 [工程验证报告](docs/ENGINEERING_VERIFICATION_20260928.md)。**首箱试运行通过不等于全部箱体、全部场景或真实深度顺序验收通过。**
 
 ## 2026-09-02 模块合并状态
 
@@ -144,7 +144,8 @@ m1_3_separator_mark/<core_box_id>/segments_with_cube_refs.json
 ```powershell
 git clone https://github.com/TujinoO/Geocore_M0-1_Preprocessing.git
 Set-Location Geocore_M0-1_Preprocessing
-python -m pip install -e .
+python -m pip install -e ".[full]"
+./scripts/install_v4_model.ps1
 ```
 
 在仓库根目录设置四个子模块的 Python 路径：
@@ -189,7 +190,7 @@ python -m geocore_preprocessing.cli run `
   --segment-length-cm 10
 ```
 
-如果 M0 预览图只是缩略图，M1-1 应使用全分辨率 RGB/ENVI 输入：
+统一入口现在优先从 M0 输入元数据解析原始 RGB `.dat`，不会静默把缩略预览当作全分辨率影像。如果元数据里没有可用原图，必须显式指定：
 
 ```powershell
 python -m geocore_preprocessing.cli run `
@@ -215,6 +216,10 @@ python -m geocore_preprocessing.cli run `
 ```
 
 `classical` 仅用于链路测试，不是生产模型。
+
+实际运行建议同时提供 `--expected-box-count`、每箱真实深度列表 `--box-depths-json`（按检测到的浅→深箱序排列，每项为 `[起始米, 终止米]`）。`--lane-count` 留空即逐箱自动识别槽数；不确定时会停止，而不会默认按 5 槽切。槽的左右顺序和柱体上下深度方向无法仅凭 RGB 可靠证明，核对箱号/野外记录后才加 `--depth-order-confirmed`。不提供每箱深度时，等分深度只是待审核估计。
+
+本机 V4 模型包位于 `modules/M1-2_foreground_mask/models/core_mask_unet_v4`。源码仓库跟踪模型清单和校验值；`weights.pth` 为约 69 MB 的二进制权重，放在本仓库 GitHub Release，不进入普通 Git 历史。新克隆仓库先运行 `./scripts/install_v4_model.ps1` 下载并核对 SHA-256；否则模型模式会明确报错，不能以 `classical` 兜底结果冒充 V4。
 
 ## 六、前后端协作原则
 

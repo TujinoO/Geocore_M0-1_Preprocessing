@@ -51,6 +51,12 @@ def run_m11_rotation_correction(
     results: list[CoreBoxResult] = []
     for candidate in detection.candidates:
         crop, inner_bbox, source_crop_bbox = _crop_for_angle_with_bbox(image, candidate.bbox_xyxy_raw, cfg)
+        source_width = source_crop_bbox[2] - source_crop_bbox[0] + 1
+        source_height = source_crop_bbox[3] - source_crop_bbox[1] + 1
+        review_scale = (
+            (source_width - 1) / max(1, crop.shape[1] - 1),
+            (source_height - 1) / max(1, crop.shape[0] - 1),
+        )
         angle = estimate_box_angle(crop, inner_bbox, cfg)
         corrected_image, corrected_mask, corrected_bbox, matrix, _ = correct_core_box(
             image,
@@ -88,6 +94,8 @@ def run_m11_rotation_correction(
                 preview_image=preview_path,
                 review_source_image=str(review_source_path),
                 source_crop_bbox_raw=source_crop_bbox,
+                review_source_size_px=(crop.shape[1], crop.shape[0]),
+                review_source_scale_xy=review_scale,
             )
         )
 
@@ -98,6 +106,7 @@ def run_m11_rotation_correction(
         output_dir=str(output_root),
         box_count=len(results),
         boxes=results,
+        detection_method=detection.method,
         detection_preview=detection_preview,
     )
     metadata_path = output_root / "metadata.json"
@@ -134,12 +143,16 @@ def _crop_for_angle_with_bbox(
     py0 = max(0, y0 - config.raw_bbox_margin_px)
     px1 = min(w - 1, x1 + config.raw_bbox_margin_px)
     py1 = min(h - 1, y1 + config.raw_bbox_margin_px)
-    crop = np.asarray(image[py0 : py1 + 1, px0 : px1 + 1])
+    # Angle estimation and review need the geometry, not a second full-size
+    # copy of a multi-gigabyte ENVI box. A uniform stride preserves slopes.
+    width, height = px1 - px0 + 1, py1 - py0 + 1
+    stride = max(1, (width + 1023) // 1024, (height + 4095) // 4096)
+    crop = np.ascontiguousarray(image[py0 : py1 + 1 : stride, px0 : px1 + 1 : stride])
     inner = (
-        max(0, x0 - px0),
-        max(0, y0 - py0),
-        min(px1 - px0, x1 - px0),
-        min(py1 - py0, y1 - py0),
+        max(0, (x0 - px0) // stride),
+        max(0, (y0 - py0) // stride),
+        min(crop.shape[1] - 1, (x1 - px0) // stride),
+        min(crop.shape[0] - 1, (y1 - py0) // stride),
     )
     return crop, inner, (px0, py0, px1, py1)
 

@@ -1,13 +1,13 @@
 {
   "layout": {
-    "lane_count": 5,
+    "lane_count": 0,
     "lane_order": "left_to_right",
     "lane_direction": "top_to_bottom",
     "allow_snake_order": false,
     "lane_padding_px": 8
   },
   "mask_refine": {
-    "enable": true,
+    "enable": false,
     "min_component_area_px": 200,
     "fill_hole_area_px": 800,
     "smooth_kernel_size": 3,

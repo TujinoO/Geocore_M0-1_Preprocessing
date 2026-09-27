@@ -93,6 +93,25 @@ def read_envi_image(dat_path: str | Path, hdr_path: str | Path) -> tuple[np.ndar
     else:
         raise ValueError(f"Unsupported ENVI interleave: {interleave}")
 
+    if bands == 3 and "default bands" in meta:
+        numbers = [int(value) for value in re.findall(r"\d+", str(meta["default bands"]))]
+        if len(numbers) != 3:
+            raise ValueError(f"Expected three RGB default bands in {hdr_path}: {numbers}")
+        if set(numbers) == {0, 1, 2}:
+            order = numbers
+        elif set(numbers) == {1, 2, 3}:
+            order = [value - 1 for value in numbers]
+        else:
+            raise ValueError(f"Invalid RGB default bands in {hdr_path}: {numbers}")
+        if order == [2, 1, 0]:
+            image = image[:, :, ::-1]
+        elif order != [0, 1, 2]:
+            raise ValueError(f"RGB order {numbers} requires a copy of the full ENVI scan; convert it before M1-1")
+        meta["rgb_bands_zero_based"] = order
+    elif bands == 3:
+        meta["rgb_bands_zero_based"] = [0, 1, 2]
+        meta["rgb_order_assumed"] = True
+
     meta["shape_hwc"] = tuple(int(v) for v in image.shape)
     return image, meta
 
@@ -138,4 +157,3 @@ def save_rgb_image(path: str | Path, image: np.ndarray, quality: int = 92) -> No
         img.save(path, quality=quality)
     else:
         img.save(path)
-

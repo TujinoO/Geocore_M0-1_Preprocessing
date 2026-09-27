@@ -49,7 +49,15 @@ def read_image(path: str | Path) -> ImageData:
     except Exception:
         pass
 
-    if io is not None:
+    if image_path.suffix.lower() in {".png", ".jpg", ".jpeg"}:
+        from PIL import Image
+
+        # One full-resolution corrected core box can exceed Pillow's default
+        # 178 MP decompression-bomb error threshold. Keep an explicit bound.
+        Image.MAX_IMAGE_PIXELS = 300_000_000
+        with Image.open(image_path) as img:
+            array = np.asarray(img.convert("RGB"))
+    elif io is not None:
         array = io.imread(str(image_path))
     else:
         from PIL import Image

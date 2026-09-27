@@ -8,7 +8,7 @@ from typing import Any, Mapping
 
 @dataclass
 class LayoutConfig:
-    lane_count: int = 5
+    lane_count: int = 0  # 0 = infer from the foreground mask; never silently assume five slots
     lane_order: str = "left_to_right"
     lane_direction: str = "top_to_bottom"
     allow_snake_order: bool = False
@@ -17,7 +17,7 @@ class LayoutConfig:
 
 @dataclass
 class MaskRefineConfig:
-    enable: bool = True
+    enable: bool = False  # preserve the validated V4 mask unless refinement is explicitly requested
     min_component_area_px: int = 200
     fill_hole_area_px: int = 800
     smooth_kernel_size: int = 3

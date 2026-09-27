@@ -74,6 +74,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         "gap_policy": args.gap_policy,
         "missing_intervals": _load_json(args.missing_intervals_json),
         "depth_anchors": _load_json(args.depth_anchors_json),
+        "box_depths": _load_json(args.box_depths_json),
+        "depth_order_confirmed": args.depth_order_confirmed,
     }
     payload = {key: value for key, value in payload.items() if value is not None}
     result = run_preprocessing_pipeline(payload)
@@ -127,6 +129,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--gap-policy", choices=["close_artificial_gaps", "preserve_all_gaps"])
     run.add_argument("--missing-intervals-json")
     run.add_argument("--depth-anchors-json")
+    run.add_argument("--box-depths-json", help="JSON list of [start_m, end_m] pairs in detected box order.")
+    run.add_argument("--depth-order-confirmed", action="store_true", help="Assert that lane ordering/direction were checked against field records.")
     run.set_defaults(func=cmd_run)
     return parser
 

@@ -34,6 +34,49 @@ class Lane:
         }
 
 
+@dataclass
+class LaneCountEstimate:
+    count: int
+    runs: list[tuple[int, int]]
+    confidence: float
+    reason: str
+
+
+def estimate_lane_count(mask: np.ndarray, min_count: int = 2, max_count: int = 8) -> LaneCountEstimate:
+    """Count long foreground columns, failing closed on ambiguous layouts."""
+
+    if mask.ndim != 2:
+        raise ValueError("estimate_lane_count expects a 2D mask.")
+    height, width = mask.shape
+    if height < 10 or width < 20:
+        return LaneCountEstimate(0, [], 0.0, "image_too_small")
+    # Subsample rows for bounded memory on full-resolution box images. The
+    # column mean still represents the entire depth of the box.
+    row_step = max(1, height // 2048)
+    projection = np.asarray(mask[::row_step], dtype=bool).mean(axis=0)
+    smooth = _smooth(projection, max(3, width // 150))
+    peak = float(smooth.max())
+    if peak < 0.03:
+        return LaneCountEstimate(0, [], 0.0, "insufficient_foreground")
+    active = smooth >= max(0.025, peak * 0.16)
+    runs = _active_runs(active)
+    min_width = max(4, int(width * 0.045))
+    runs = [(a, b) for a, b in runs if b - a >= min_width]
+    if not min_count <= len(runs) <= max_count:
+        return LaneCountEstimate(len(runs), runs, 0.0, "implausible_lane_count")
+    widths = np.asarray([b - a for a, b in runs], dtype=float)
+    gaps = np.asarray([runs[i + 1][0] - runs[i][1] for i in range(len(runs) - 1)], dtype=float)
+    if np.any(gaps < max(3, width * 0.0075)):
+        return LaneCountEstimate(len(runs), runs, 0.0, "weak_lane_separation")
+    width_ratio = float(widths.min() / widths.max())
+    support = np.asarray([float(smooth[a:b].max()) for a, b in runs])
+    support_ratio = float(support.min() / max(peak, 1e-6))
+    confidence = min(width_ratio, support_ratio)
+    if confidence < 0.45:
+        return LaneCountEstimate(len(runs), runs, confidence, "uneven_lane_support")
+    return LaneCountEstimate(len(runs), runs, confidence, "ok")
+
+
 def _smooth(values: np.ndarray, window: int) -> np.ndarray:
     window = max(1, int(window))
     if window <= 1:
@@ -102,14 +145,32 @@ def _direction_for_lane(base_direction: str, allow_snake: bool, lane_index: int)
 def detect_lanes(mask: np.ndarray, config: LayoutConfig, core_box_id: str = "core_box") -> list[Lane]:
     if mask.ndim != 2:
         raise ValueError("detect_lanes expects a 2D mask.")
-    lane_count = max(1, int(config.lane_count))
+    estimate = estimate_lane_count(mask)
+    if config.lane_count == 0:
+        if estimate.reason != "ok":
+            raise ValueError(f"Cannot infer a reliable core-box lane count: {estimate.reason} ({estimate.count} candidates)")
+        lane_count = estimate.count
+    else:
+        lane_count = int(config.lane_count)
+        if lane_count < 1:
+            raise ValueError("lane_count must be zero (auto) or a positive integer")
+        if estimate.reason == "ok" and estimate.count != lane_count:
+            raise ValueError(f"Configured lane_count={lane_count} conflicts with {estimate.count} lanes in the mask")
     height, width = mask.shape
     projection = mask.sum(axis=0).astype(float)
     smoothed = _smooth(projection, max(5, width // 80))
-    centers = _weighted_kmeans_1d(smoothed, lane_count)
-    boundaries = [0]
-    boundaries.extend(int(round((centers[i] + centers[i + 1]) / 2.0)) for i in range(lane_count - 1))
-    boundaries.append(width)
+    if estimate.reason == "ok" and estimate.count == lane_count:
+        # Place splits inside the observed empty separator, not halfway
+        # between potentially unequal-width lane centres.
+        boundaries = [0]
+        boundaries.extend((estimate.runs[i][1] + estimate.runs[i + 1][0]) // 2
+                          for i in range(lane_count - 1))
+        boundaries.append(width)
+    else:
+        centers = _weighted_kmeans_1d(smoothed, lane_count)
+        boundaries = [0]
+        boundaries.extend(int(round((centers[i] + centers[i + 1]) / 2.0)) for i in range(lane_count - 1))
+        boundaries.append(width)
 
     lanes: list[Lane] = []
     max_projection = max(1.0, float(smoothed.max()))
@@ -127,8 +188,8 @@ def detect_lanes(mask: np.ndarray, config: LayoutConfig, core_box_id: str = "cor
             best_start, best_end = max(runs, key=lambda run: float(local_projection[run[0] : run[1]].sum()))
             x0 = raw_x0 + int(best_start) - config.lane_padding_px
             x1 = raw_x0 + int(best_end) + config.lane_padding_px
-            x0 = max(0, min(width - 1, x0))
-            x1 = max(x0 + 1, min(width, x1))
+            x0 = max(raw_x0, min(raw_x1 - 1, x0))
+            x1 = max(x0 + 1, min(raw_x1, x1))
         else:
             x0, x1 = raw_x0, raw_x1
 

@@ -4,11 +4,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from PIL import Image
+
 from geocore_m1_3 import __version__
 from geocore_m1_3.config import PipelineConfig, config_from_dict, deep_update, load_config
 from geocore_m1_3.depth.mapper import DepthMapper, parse_depth_anchors, parse_missing_intervals
 from geocore_m1_3.io.m1_2_loader import load_m1_2_inputs
-from geocore_m1_3.layout.lane_detector import detect_lanes
+from geocore_m1_3.layout.frame_bounds import trim_orange_frame_rows
+from geocore_m1_3.layout.lane_detector import detect_lanes, estimate_lane_count
 from geocore_m1_3.mask_refine.refiner import refine_mask
 from geocore_m1_3.quality.reports import build_quality_report
 from geocore_m1_3.reconstruct.strip_builder import build_reconstructed_strip
@@ -81,6 +84,7 @@ def run_segment_depth(payload: dict[str, Any]) -> dict:
     image_rgb = read_rgb(image_path)
     raw_mask = read_mask(m1_2_inputs.mask_path)
     _validate_dimensions(image_rgb.shape, raw_mask.shape)
+    frame_trim = trim_orange_frame_rows(raw_mask, image_rgb)
 
     hole_id = str(payload.get("hole_id", "UNKNOWN_HOLE"))
     core_box_id = str(payload.get("core_box_id", Path(image_path).stem))
@@ -105,19 +109,27 @@ def run_segment_depth(payload: dict[str, Any]) -> dict:
         "depth_end_m": depth_end_m,
         "config": config.to_dict(),
         "request_payload": payload,
+        "orange_frame_trim": frame_trim,
     }
     write_json(output_root / "input_manifest.json", input_manifest)
 
+    raw_lane_estimate = estimate_lane_count(raw_mask)
     initial_lanes = detect_lanes(raw_mask, config.layout, core_box_id=core_box_id)
     refine_result = refine_mask(raw_mask, initial_lanes, config.mask_refine)
     refined_mask = refine_result.refined_mask
     lanes = detect_lanes(refined_mask, config.layout, core_box_id=core_box_id)
+    if len(lanes) != len(initial_lanes):
+        raise ValueError("Lane count changed during mask refinement; review the M1-2 mask before reconstruction")
 
     save_mask(output_root / "refined_mask.png", refined_mask)
     save_mask(output_root / "refined_mask.tif", refined_mask)
     save_rgb(output_root / "refined_overlay.png", make_overlay(image_rgb, refined_mask))
     save_lane_debug(output_root / "lane_debug_overlay.png", image_rgb, [lane.to_dict() for lane in lanes])
-    write_json(output_root / "lane_detection.json", {"lanes": [lane.to_dict() for lane in lanes]})
+    write_json(output_root / "lane_detection.json", {
+        "count_source": "foreground_mask_auto" if config.layout.lane_count == 0 else "user_configured_and_mask_checked",
+        "raw_mask_estimate": raw_lane_estimate.__dict__,
+        "lanes": [lane.to_dict() for lane in lanes],
+    })
     write_json(
         output_root / "removed_components.json",
         {
@@ -137,8 +149,11 @@ def run_segment_depth(payload: dict[str, Any]) -> dict:
     save_rgba(output_root / "reconstructed_strip.png", strip_result.strip_rgba)
     save_mask(output_root / "reconstructed_strip_mask.png", strip_result.strip_mask)
     # JPEG preview cannot carry alpha; black background is acceptable for fast visual review.
-    preview_rgb = strip_result.strip_rgba[:, :, :3].copy()
-    save_rgb(output_root / "reconstructed_strip_preview.jpg", preview_rgb)
+    preview_rgba = Image.fromarray(strip_result.strip_rgba, mode="RGBA")
+    preview_rgba.thumbnail((1600, 4096), Image.Resampling.BILINEAR)
+    preview = Image.new("RGB", preview_rgba.size, (20, 20, 20))
+    preview.paste(preview_rgba, mask=preview_rgba.getchannel("A"))
+    preview.save(output_root / "reconstructed_strip_preview.jpg", quality=90)
     write_json(output_root / "strip_mapping.json", strip_result.mapping)
 
     depth_mapper = DepthMapper(
@@ -176,8 +191,13 @@ def run_segment_depth(payload: dict[str, Any]) -> dict:
     write_json(output_root / "segments.json", segments_json)
 
     all_warnings = refine_result.warnings + strip_result.warnings
+    if not payload.get("depth_order_confirmed", False):
+        all_warnings.append({
+            "code": "depth_order_unverified",
+            "message": "Lane order and direction are image conventions only; verify them against field depth labels.",
+        })
     quality_report = build_quality_report(
-        lane_count_expected=config.layout.lane_count,
+        lane_count_expected=len(initial_lanes),
         lane_count_detected=len(lanes),
         refine_report=refine_result.report,
         strip_mapping=strip_result.mapping,

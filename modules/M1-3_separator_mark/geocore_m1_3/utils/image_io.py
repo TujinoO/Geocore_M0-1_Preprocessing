@@ -7,13 +7,15 @@ from PIL import Image, ImageDraw
 
 
 def read_rgb(path: str | Path) -> np.ndarray:
-    image = Image.open(path).convert("RGB")
-    return np.asarray(image, dtype=np.uint8)
+    Image.MAX_IMAGE_PIXELS = 300_000_000
+    with Image.open(path) as image:
+        return np.asarray(image.convert("RGB"), dtype=np.uint8)
 
 
 def read_mask(path: str | Path, threshold: int = 127) -> np.ndarray:
-    image = Image.open(path).convert("L")
-    return np.asarray(image, dtype=np.uint8) > threshold
+    Image.MAX_IMAGE_PIXELS = 300_000_000
+    with Image.open(path) as image:
+        return np.asarray(image.convert("L"), dtype=np.uint8) > threshold
 
 
 def save_rgb(path: str | Path, array: np.ndarray) -> None:

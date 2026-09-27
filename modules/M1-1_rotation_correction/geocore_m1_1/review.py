@@ -57,22 +57,13 @@ def manual_correct_box(
     points = _annotation_points(annotation)
     if len(points) < 2:
         raise ValueError("Manual annotation requires at least two points.")
-    crop_x0, crop_y0, crop_x1, crop_y1 = [int(v) for v in source_bbox]
-    source_w = crop_x1 - crop_x0 + 1
-    source_h = crop_y1 - crop_y0 + 1
-    clipped = [(max(0.0, min(source_w - 1.0, x)), max(0.0, min(source_h - 1.0, y))) for x, y in points]
-    xs = [point[0] for point in clipped]
-    ys = [point[1] for point in clipped]
-    raw_bbox = (
-        crop_x0 + int(math.floor(min(xs))),
-        crop_y0 + int(math.floor(min(ys))),
-        crop_x0 + int(math.ceil(max(xs))),
-        crop_y0 + int(math.ceil(max(ys))),
+    raw_bbox, clipped, raw_points = _map_review_points_to_raw(
+        points, source_bbox, target.get("review_source_size_px"), target.get("review_source_scale_xy")
     )
 
     image, _ = read_input_image(input_path, hdr_path)
     cfg = M11Config(manual_angle_delta_deg=manual_angle_delta_deg)
-    polygon_angle = _angle_from_polygon(clipped) if len(clipped) >= 4 else None
+    polygon_angle = _angle_from_polygon(raw_points) if len(raw_points) >= 4 else None
     if polygon_angle is None:
         crop, inner = _crop_for_angle(image, raw_bbox, cfg)
         angle = estimate_box_angle(crop, inner, cfg)
@@ -111,6 +102,7 @@ def manual_correct_box(
             "manual_annotation": {
                 "type": annotation.get("type", "polygon" if len(clipped) > 2 else "rectangle"),
                 "points_source_px": [[float(x), float(y)] for x, y in clipped],
+                "points_raw_crop_px": [[float(x), float(y)] for x, y in raw_points],
                 "source_crop_bbox_raw": source_bbox,
             },
         }
@@ -164,6 +156,30 @@ def _annotation_points(annotation: dict[str, Any]) -> list[tuple[float, float]]:
         y1 = float(rect["y1"])
         return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
     raise ValueError("Annotation must contain points, rect{x,y,width,height}, or x0/y0/x1/y1.")
+
+
+def _map_review_points_to_raw(
+    points: list[tuple[float, float]],
+    source_bbox: list[int] | tuple[int, int, int, int],
+    review_size: list[int] | tuple[int, int] | None,
+    review_scale: list[float] | tuple[float, float] | None,
+) -> tuple[tuple[int, int, int, int], list[tuple[float, float]], list[tuple[float, float]]]:
+    crop_x0, crop_y0, crop_x1, crop_y1 = [int(v) for v in source_bbox]
+    source_w = crop_x1 - crop_x0 + 1
+    source_h = crop_y1 - crop_y0 + 1
+    review_w, review_h = [int(value) for value in (review_size or [source_w, source_h])]
+    scale_x, scale_y = [float(value) for value in (review_scale or [1.0, 1.0])]
+    clipped = [(max(0.0, min(review_w - 1.0, x)), max(0.0, min(review_h - 1.0, y))) for x, y in points]
+    raw_points = [(min(source_w - 1.0, x * scale_x), min(source_h - 1.0, y * scale_y)) for x, y in clipped]
+    xs = [point[0] for point in raw_points]
+    ys = [point[1] for point in raw_points]
+    raw_bbox = (
+        crop_x0 + int(math.floor(min(xs))),
+        crop_y0 + int(math.floor(min(ys))),
+        crop_x0 + int(math.ceil(max(xs))),
+        crop_y0 + int(math.ceil(max(ys))),
+    )
+    return raw_bbox, clipped, raw_points
 
 
 def _angle_from_polygon(points: list[tuple[float, float]]) -> float | None:

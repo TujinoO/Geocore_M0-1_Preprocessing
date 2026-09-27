@@ -91,7 +91,7 @@ def _run_m11(accessor: FusionResultAccessor, payload: dict[str, Any], output_roo
     from geocore_m1_1.config import M11Config
     from geocore_m1_1.pipeline import run_m11_rotation_correction
 
-    input_image = Path(payload.get("m1_1_input_image") or accessor.preview_path()).resolve()
+    input_image = _resolve_m11_input(accessor, payload)
     output_dir = output_root / "m1_1_rotation"
     config = M11Config(
         thumbnail_width=int(payload.get("m1_1_thumbnail_width", 512)),
@@ -110,6 +110,27 @@ def _run_m11(accessor: FusionResultAccessor, payload: dict[str, Any], output_roo
     metadata["input_grid"] = input_grid.__dict__
     metadata["input_to_rgb_reference_scale"] = list(_scale_grid_to_reference(accessor, input_grid))
     return metadata
+
+
+def _resolve_m11_input(accessor: FusionResultAccessor, payload: dict[str, Any]) -> Path:
+    """Keep M1-1/M1-2 at native RGB scale, not M0's display-preview scale."""
+
+    explicit = payload.get("m1_1_input_image") or payload.get("rgb_dat")
+    if explicit:
+        path = Path(explicit).resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"M1-1 RGB input does not exist: {path}")
+        return path
+    input_metadata_path = accessor.root / accessor.manifest.get("metadata", {}).get("input_metadata", "")
+    if input_metadata_path.is_file():
+        input_metadata = read_json(input_metadata_path)
+        rgb_path = input_metadata.get("rgb", {}).get("dat_path")
+        if rgb_path and Path(rgb_path).is_file():
+            return Path(rgb_path).resolve()
+    preview = accessor.preview_path()
+    if accessor.preview_grid(preview).width != accessor.grid.width or accessor.preview_grid(preview).height != accessor.grid.height:
+        raise ValueError("M0 preview is downsampled; provide the native RGB image via m1_1_input_image")
+    return preview.resolve()
 
 
 def _m1_input_grid(input_image: str | Path, hdr_path: str | None = None) -> ImageGrid:
@@ -209,8 +230,9 @@ def _resolve_depth_range(
     start = payload.get("depth_start_m", _project_value(accessor, "depth_start_m"))
     end = payload.get("depth_end_m", _project_value(accessor, "depth_end_m"))
     if start is None or end is None:
-        warnings.append("depth_start_m/depth_end_m were not provided; using synthetic 1 m per detected box.")
-        return 0.0, float(max(1, box_count))
+        raise ValueError("Real depth_start_m and depth_end_m are required; synthetic depths are not allowed")
+    if float(end) <= float(start):
+        raise ValueError("depth_end_m must be greater than depth_start_m")
     return float(start), float(end)
 
 
@@ -220,6 +242,27 @@ def _box_depth_window(index: int, count: int, depth_start: float, depth_end: flo
     box_start = depth_start + span * index / count
     box_end = depth_start + span * (index + 1) / count
     return float(box_start), float(box_end)
+
+
+def _box_depth_windows(payload: dict[str, Any], boxes: list[dict[str, Any]],
+                       depth_start: float, depth_end: float, warnings: list[str]) -> list[tuple[float, float]]:
+    declared = payload.get("box_depths")
+    if declared is None:
+        warnings.append("Per-box depths were not supplied; equal-span depth windows are provisional and require review.")
+        return [_box_depth_window(i, len(boxes), depth_start, depth_end) for i in range(len(boxes))]
+    if not isinstance(declared, list) or len(declared) != len(boxes):
+        raise ValueError("box_depths must contain one [start_m, end_m] pair per processed box")
+    windows: list[tuple[float, float]] = []
+    for index, item in enumerate(declared):
+        if not isinstance(item, (list, tuple)) or len(item) != 2:
+            raise ValueError(f"box_depths[{index}] must be [start_m, end_m]")
+        start, end = float(item[0]), float(item[1])
+        if start >= end or start < depth_start or end > depth_end:
+            raise ValueError(f"box_depths[{index}] lies outside the declared range or is reversed")
+        if windows and start < windows[-1][1]:
+            raise ValueError("box_depths must be in non-overlapping shallow-to-deep order")
+        windows.append((start, end))
+    return windows
 
 
 def _run_m13_for_box(
@@ -261,6 +304,7 @@ def _run_m13_for_box(
         m13_payload["depth_anchors"] = payload["depth_anchors"]
     if payload.get("gap_policy"):
         m13_payload["gap_policy"] = payload["gap_policy"]
+    m13_payload["depth_order_confirmed"] = bool(payload.get("depth_order_confirmed", False))
     return run_segment_depth(m13_payload)
 
 
@@ -343,7 +387,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
 
     manifest_path = _run_m0_if_needed(payload, output_root)
     accessor = FusionResultAccessor(manifest_path)
-    preview_path = Path(payload.get("m1_1_input_image") or accessor.preview_path()).resolve()
+    m11_input_path = _resolve_m11_input(accessor, payload)
     m11_metadata = _run_m11(accessor, payload, output_root)
     m1_input_grid = ImageGrid(**m11_metadata["input_grid"])
     boxes = sorted(m11_metadata.get("boxes", []), key=lambda item: int(item.get("order_index", 0)))
@@ -353,6 +397,9 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError("M1-1 did not detect any core boxes; cannot continue to M1-2/M1-3.")
 
     depth_start, depth_end = _resolve_depth_range(accessor, payload, len(boxes), warnings)
+    depth_windows = _box_depth_windows(payload, boxes, depth_start, depth_end, warnings)
+    if not payload.get("depth_order_confirmed", False):
+        warnings.append("Lane left/right and top/bottom depth order is an unverified convention; confirm against box labels or field records.")
     hole_id = str(payload.get("hole_id") or _project_value(accessor, "borehole_id", "UNKNOWN_HOLE"))
     box_prefix = str(payload.get("core_box_prefix") or _project_value(accessor, "box_id", "CORE_BOX"))
     predictor, m12_engine_info = _build_m12_predictor(payload)
@@ -366,14 +413,14 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
         "fusion": {
             "manifest_path": str(accessor.manifest_path),
             "grid": accessor.grid.__dict__,
-            "preview_path": str(preview_path),
+            "preview_path": str(accessor.preview_path()),
             "cube_ref": accessor.cube_ref(),
             "quality_report": str(accessor.quality_report_path) if accessor.quality_report_path else None,
         },
         "m1_1": {
             "output_dir": str(output_root / "m1_1_rotation"),
             "metadata_path": m11_metadata.get("metadata_path"),
-            "input_image": str(preview_path),
+            "input_image": str(m11_input_path),
             "input_grid": m11_metadata.get("input_grid"),
             "input_to_rgb_reference_scale": m11_metadata.get("input_to_rgb_reference_scale"),
             "box_count": len(boxes),
@@ -395,7 +442,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
     for index, box in enumerate(boxes):
         box_id = str(box["box_id"])
         rgb_bbox = _bbox_to_reference(accessor, box["bbox_xyxy_raw"], m1_input_grid)
-        d0, d1 = _box_depth_window(index, len(boxes), depth_start, depth_end)
+        d0, d1 = depth_windows[index]
         core_box_id = f"{box_prefix}_{box_id}"
         box_context = {
             "box_id": box_id,
@@ -448,7 +495,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
         "created_at": _now(),
         "reference_manifest": str(accessor.manifest_path),
         "reference_grid": accessor.grid.__dict__,
-        "m1_working_image": str(preview_path),
+        "m1_working_image": str(m11_input_path),
         "m1_working_grid": m1_input_grid.__dict__,
         "transforms": transforms,
     }
@@ -460,6 +507,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
     write_json(context_path, context)
     result = {
         "status": "succeeded",
+        "quality_status": "needs_review" if warnings or any(box["m1_3"].get("warnings") for box in context["boxes"]) else "passed_automated_checks",
         "created_at": _now(),
         "output_dir": str(output_root),
         "output_files": {

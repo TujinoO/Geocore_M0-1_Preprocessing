@@ -23,14 +23,14 @@ class ManualReviewTests(unittest.TestCase):
                 config=M11Config(save_previews=False, expected_box_count=9),
             )
             target = next(box for box in result.boxes if box.box_id == "box_0006")
-            x0, y0, x1, y1 = target.source_crop_bbox_raw or (0, 0, 0, 0)
+            review_w, review_h = target.review_source_size_px or (0, 0)
             annotation = {
                 "type": "rectangle",
                 "rect": {
                     "x": 40,
                     "y": 40,
-                    "width": max(20, x1 - x0 - 80),
-                    "height": max(20, y1 - y0 - 80),
+                    "width": max(20, review_w - 80),
+                    "height": max(20, review_h - 80),
                 },
             }
             updated = manual_correct_box(
@@ -43,6 +43,7 @@ class ManualReviewTests(unittest.TestCase):
             self.assertEqual(updated["correction_status"], "manual")
             self.assertFalse(updated["needs_manual_review"])
             self.assertTrue(Path(updated["output_image"]).exists())
+            self.assertGreater(updated["bbox_xyxy_raw"][2] - updated["bbox_xyxy_raw"][0], review_w)
 
 
 if __name__ == "__main__":

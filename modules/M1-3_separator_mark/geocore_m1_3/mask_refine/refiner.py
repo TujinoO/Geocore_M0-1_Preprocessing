@@ -76,10 +76,9 @@ def _component_inside_any_lane(component: Component, lanes: list[Lane], margin: 
 def refine_mask(mask: np.ndarray, lanes: list[Lane], config: MaskRefineConfig) -> RefinementResult:
     original_mask = mask.astype(bool)
     if not config.enable:
-        components = connected_components(original_mask)
         return RefinementResult(
             refined_mask=original_mask,
-            kept_components=components,
+            kept_components=[],
             removed_components=[],
             warnings=[],
             report={

@@ -14,6 +14,7 @@ def write_qa_report(result: M11BatchResult, output_path: str | Path) -> str:
         f"- input: `{result.input_path}`",
         f"- hdr: `{result.hdr_path}`",
         f"- box_count: `{result.box_count}`",
+        f"- detection_method: `{result.detection_method}`",
         "",
         "| box_id | angle_deg | confidence | review | output |",
         "| --- | ---: | ---: | --- | --- |",
@@ -25,4 +26,3 @@ def write_qa_report(result: M11BatchResult, output_path: str | Path) -> str:
         )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return str(path)
-

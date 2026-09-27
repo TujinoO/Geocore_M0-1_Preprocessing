@@ -39,6 +39,8 @@ class CoreBoxResult:
     preview_image: str | None = None
     review_source_image: str | None = None
     source_crop_bbox_raw: tuple[int, int, int, int] | None = None
+    review_source_size_px: tuple[int, int] | None = None
+    review_source_scale_xy: tuple[float, float] = (1.0, 1.0)
     correction_status: str = "auto"
 
     def to_dict(self) -> dict[str, Any]:
@@ -53,6 +55,7 @@ class M11BatchResult:
     output_dir: str
     box_count: int
     boxes: list[CoreBoxResult]
+    detection_method: str = "horizontal_gradient_peaks"
     detection_preview: str | None = None
     qa_report: str | None = None
 

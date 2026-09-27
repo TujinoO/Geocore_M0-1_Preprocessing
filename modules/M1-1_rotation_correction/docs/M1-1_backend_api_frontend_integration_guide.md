@@ -108,7 +108,7 @@ Access-Control-Allow-Headers: Content-Type
 1. 人工框选坐标的坐标系是 `review_source_image` 的像素坐标。
 2. 左上角为原点 `(0, 0)`。
 3. `x` 向右递增，`y` 向下递增。
-4. 后端通过 `source_crop_bbox_raw` 将该坐标映射回原始长条影像。
+4. 后端通过 `review_source_scale_xy` 和 `source_crop_bbox_raw` 将该坐标映射回原始长条影像；大幅面源图会缩采样，前端仍只提交 `review_source_image` 的原始像素坐标，不要自行乘比例。
 5. 前端不要把显示缩放后的 CSS 坐标直接传回，必须换算回图片原始像素坐标。
 
 ## 5. 输出目录结构

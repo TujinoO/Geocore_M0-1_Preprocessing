@@ -37,6 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     segment.add_argument("--gap-policy", choices=["close_artificial_gaps", "preserve_all_gaps"], help="Gap handling policy.")
     segment.add_argument("--missing-intervals-json", help="JSON file with missing_intervals list.")
     segment.add_argument("--depth-anchors-json", help="JSON file with depth_anchors list.")
+    segment.add_argument("--depth-order-confirmed", action="store_true", help="Assert lane order/direction was verified against field records.")
     return parser
 
 
@@ -54,6 +55,7 @@ def main(argv: list[str] | None = None) -> None:
             "depth_end_m": args.depth_end_m,
             "config_path": args.config_path,
             "task_id": args.task_id,
+            "depth_order_confirmed": args.depth_order_confirmed,
         }
         layout: dict[str, Any] = {}
         if args.lane_count is not None:

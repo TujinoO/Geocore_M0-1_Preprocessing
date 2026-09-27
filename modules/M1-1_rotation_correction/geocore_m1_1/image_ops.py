@@ -21,19 +21,25 @@ def to_gray(image: np.ndarray) -> np.ndarray:
 
 
 def make_thumbnail(image: np.ndarray, width: int) -> tuple[np.ndarray, float, float]:
-    """Resize an RGB-like image to a fixed width and return x/y scale factors."""
+    """Build a bounded-memory thumbnail, including from a multi-GB ENVI memmap."""
 
     arr = np.asarray(image)
+    src_h, src_w = arr.shape[:2]
+    if width < 1:
+        raise ValueError("thumbnail width must be positive")
+    target_h = max(1, int(round(src_h * width / src_w)))
+    # Stride before Pillow sees the array: Image.fromarray on a memmap view
+    # otherwise materializes the entire (potentially multi-GB) RGB scan.
+    stride = max(1, src_w // width)
+    sampled = arr[::stride, ::stride]
     if arr.ndim == 2:
-        pil = Image.fromarray(_as_uint8(arr), mode="L")
+        pil = Image.fromarray(np.ascontiguousarray(_as_uint8(sampled)), mode="L")
     else:
-        pil = Image.fromarray(_as_uint8(arr[:, :, :3]), mode="RGB")
-    src_w, src_h = pil.size
-    height = max(1, int(round(src_h * width / src_w)))
-    thumb = np.asarray(pil.resize((width, height), Image.Resampling.BILINEAR))
+        pil = Image.fromarray(np.ascontiguousarray(_as_uint8(sampled[:, :, :3])), mode="RGB")
+    thumb = np.asarray(pil.resize((width, target_h), Image.Resampling.BILINEAR))
     if thumb.ndim == 2:
         thumb = thumb[:, :, None]
-    return thumb, src_w / width, src_h / height
+    return thumb, src_w / width, src_h / target_h
 
 
 def contrast_stretch_uint8(image: np.ndarray, low_pct: float = 1.0, high_pct: float = 99.0) -> np.ndarray:
@@ -176,4 +182,3 @@ def _as_uint8(image: np.ndarray) -> np.ndarray:
     if arr.dtype == np.uint8:
         return arr
     return contrast_stretch_uint8(arr)
-

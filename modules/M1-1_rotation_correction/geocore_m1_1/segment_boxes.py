@@ -24,12 +24,28 @@ class DetectionResult:
     scale_x: float
     scale_y: float
     boundary_peaks: list[BoundaryPeak]
+    method: str = "horizontal_gradient_peaks"
 
 
 def detect_core_boxes(image: np.ndarray, config: M11Config) -> DetectionResult:
     """Detect stacked core-box candidates from a long-strip image."""
 
     thumbnail, scale_x, scale_y = make_thumbnail(image, config.thumbnail_width)
+    orange_boxes = _detect_orange_frame_boxes(thumbnail)
+    if orange_boxes is not None:
+        raw_h, raw_w = image.shape[:2]
+        candidates = []
+        thumb_boxes = []
+        for index, (bbox_thumb, score) in enumerate(orange_boxes, start=1):
+            thumb_boxes.append(bbox_thumb)
+            candidates.append(CoreBoxCandidate(
+                box_id=f"box_{index:04d}", order_index=index,
+                bbox_xyxy_thumb=bbox_thumb,
+                bbox_xyxy_raw=_scale_bbox_to_raw(bbox_thumb, scale_x, scale_y, raw_w, raw_h),
+                boundary_score=score, split_score=score,
+            ))
+        return DetectionResult(candidates, thumbnail, thumb_boxes, scale_x, scale_y, [], "orange_frame_pairs")
+
     gray = to_gray(thumbnail)
     height, width = gray.shape
     x0_band = int(width * config.horizontal_band_left_ratio)
@@ -73,6 +89,70 @@ def detect_core_boxes(image: np.ndarray, config: M11Config) -> DetectionResult:
         scale_y=scale_y,
         boundary_peaks=peaks,
     )
+
+
+def _detect_orange_frame_boxes(thumbnail: np.ndarray) -> list[tuple[tuple[int, int, int, int], float]] | None:
+    """Pair full-width orange top/bottom rails, not horizontal rock fractures."""
+
+    if thumbnail.ndim != 3 or thumbnail.shape[2] < 3:
+        return None
+    height, width = thumbnail.shape[:2]
+    rgb = thumbnail[:, :, :3].astype(np.int16)
+    red, green, blue = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    orange = (red > 125) & (red > 1.35 * green) & (green > 1.35 * blue) & (red - blue > 80)
+    left, right = int(width * 0.12), int(width * 0.88)
+    coverage = orange[:, left:right].mean(axis=1)
+    active = np.flatnonzero(coverage > 0.35)
+    if active.size == 0:
+        return None
+    breaks = np.flatnonzero(np.diff(active) > 1)
+    starts = np.r_[0, breaks + 1]
+    ends = np.r_[breaks + 1, active.size]
+    min_run = max(5, width // 25)
+    rails = [(int(active[s]), int(active[e - 1]) + 1)
+             for s, e in zip(starts, ends)
+             if int(active[e - 1]) - int(active[s]) + 1 >= min_run
+             and float(coverage[active[s]:active[e - 1] + 1].max()) > 0.65]
+    if len(rails) < 4:
+        return None
+    if len(rails) % 2:
+        raise RuntimeError(f"Ambiguous orange box-frame rails ({len(rails)}); review M1-1 thumbnail before cropping")
+    centers = [(start + end) / 2 for start, end in rails]
+    spans = np.asarray([centers[2 * i + 1] - centers[2 * i] for i in range(len(rails) // 2)])
+    gaps = np.asarray([centers[2 * i + 2] - centers[2 * i + 1] for i in range(len(rails) // 2 - 1)])
+    typical = float(np.median(spans))
+    if (typical < width or np.any(spans < typical * 0.72) or np.any(spans > typical * 1.28)
+            or np.any(gaps < 0) or np.any(gaps > typical * 0.28)):
+        raise RuntimeError("Orange box-frame pairing is inconsistent; manual M1-1 review is required")
+
+    # The saturated centre of a rail is much narrower than the actual box.
+    # Use its less-saturated orange paint to locate the *outer* frame edges.
+    weak_orange = (red > 70) & (red > 1.15 * green) & (red - blue > 30)
+    pad_x = max(3, int(width * 0.015))
+    pad_y = max(3, int(width * 0.012))
+    boxes = []
+    for index in range(len(rails) // 2):
+        top = rails[2 * index]
+        bottom = rails[2 * index + 1]
+        rail_pixels = np.concatenate((weak_orange[top[0]:top[1]], weak_orange[bottom[0]:bottom[1]]), axis=0)
+        frame_x = np.flatnonzero(rail_pixels.mean(axis=0) > 0.30)
+        if frame_x.size < width * 0.60:
+            raise RuntimeError(f"Orange box {index + 1} has insufficient horizontal frame support")
+        x0 = max(0, int(frame_x[0]) - pad_x)
+        x1 = min(width - 1, int(frame_x[-1]) + pad_x)
+        y0 = max(0, top[0] - pad_y)
+        y1 = min(height - 1, bottom[1] + pad_y)
+        if index > 0:
+            previous_bottom = rails[2 * index - 1][1]
+            y0 = max(y0, (previous_bottom + top[0]) // 2)
+        if index + 1 < len(rails) // 2:
+            next_top = rails[2 * index + 2][0]
+            y1 = min(y1, (bottom[1] + next_top) // 2 - 1)
+        if y1 <= y0:
+            raise RuntimeError(f"Orange box {index + 1} has invalid non-overlapping bounds")
+        score = float((coverage[top[0]:top[1]].max() + coverage[bottom[0]:bottom[1]].max()) / 2)
+        boxes.append(((x0, y0, x1, y1), score))
+    return boxes
 
 
 def _detect_horizontal_boundary_peaks(
@@ -251,4 +331,3 @@ def _scale_bbox_to_raw(
         max(0, min(raw_w - 1, int(round((x1 + 1) * scale_x)) - 1)),
         max(0, min(raw_h - 1, int(round((y1 + 1) * scale_y)) - 1)),
     )
-
