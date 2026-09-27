@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class LayoutOptions(BaseModel):
-    lane_count: int = Field(default=5, ge=1)
+    lane_count: int = Field(default=0, ge=0, description="0 = infer lane count from the foreground mask")
     lane_order: str = "left_to_right"
     lane_direction: str = "top_to_bottom"
 

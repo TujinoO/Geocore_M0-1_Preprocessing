@@ -2,13 +2,29 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from geocore_preprocessing.fusion_accessor import ImageGrid
-from geocore_preprocessing.pipeline import _box_depth_windows, _resolve_m11_input
+from geocore_preprocessing.pipeline import _box_depth_windows, _preflight_m0_output, _resolve_m11_input
 
 
 class PipelineGuardsTest(unittest.TestCase):
+    def test_m0_preflight_accounts_for_padded_zarr_chunks(self):
+        metadata = [
+            SimpleNamespace(lines=768, samples=512, bands=3),
+            SimpleNamespace(lines=149, samples=81, bands=341),
+            SimpleNamespace(lines=149, samples=81, bands=212),
+        ]
+        payload = {"rgb_hdr": "rgb.hdr", "nir_hdr": "nir.hdr", "swir_hdr": "swir.hdr", "m0_streaming": True}
+        with patch("geocore_m01_fusion.envi.parse_envi_header", side_effect=metadata), \
+             patch("geocore_preprocessing.pipeline.shutil.disk_usage", return_value=SimpleNamespace(free=10_000_000_000)):
+            self.assertEqual(_preflight_m0_output(payload, Path(".")), 1_207_959_552)
+        with patch("geocore_m01_fusion.envi.parse_envi_header", side_effect=metadata), \
+             patch("geocore_preprocessing.pipeline.shutil.disk_usage", return_value=SimpleNamespace(free=1_000_000_000)):
+            with self.assertRaisesRegex(RuntimeError, "cannot be safely materialized"):
+                _preflight_m0_output(payload, Path("."))
+
     def test_downsampled_preview_cannot_replace_native_rgb(self):
         accessor = Mock()
         accessor.root = Path(__file__).parent

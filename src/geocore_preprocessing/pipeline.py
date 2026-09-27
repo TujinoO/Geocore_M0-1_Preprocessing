@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import shutil
 from typing import Any
 
 from .classical_mask import run_classical_foreground_mask
@@ -75,6 +76,7 @@ def _run_m0_if_needed(payload: dict[str, Any], output_root: Path) -> Path:
             "Either manifest_path or M0 inputs are required. "
             f"Missing M0 ENVI fields: {', '.join(missing)}"
         )
+    _preflight_m0_output(payload, output_root)
     result = fuse_envi_files(
         EnviInput(Path(payload["rgb_hdr"]), Path(payload["rgb_dat"]) if payload.get("rgb_dat") else None),
         EnviInput(Path(payload["nir_hdr"]), Path(payload["nir_dat"]) if payload.get("nir_dat") else None),
@@ -85,6 +87,39 @@ def _run_m0_if_needed(payload: dict[str, Any], output_root: Path) -> Path:
         mmap=not bool(payload.get("no_mmap", False)),
     )
     return result.output_dir / "manifest.json"
+
+
+def _preflight_m0_output(payload: dict[str, Any], output_root: Path) -> int:
+    """Reject a full-RGB-grid, uncompressed cube that cannot fit on disk."""
+
+    from geocore_m01_fusion.envi import parse_envi_header
+
+    rgb = parse_envi_header(payload["rgb_hdr"])
+    nir = parse_envi_header(payload["nir_hdr"])
+    swir = parse_envi_header(payload["swir_hdr"])
+    band_count = int(nir.bands) + int(swir.bands)
+    cube_bytes = int(rgb.lines) * int(rgb.samples) * band_count * 4
+    cy, cx, cb = [int(value) for value in payload.get("chunk_size", (512, 512, 32))]
+    if min(cy, cx, cb) < 1:
+        raise ValueError("M0 chunk dimensions must be positive")
+    # Current Zarr-v2 writer stores every boundary chunk at full chunk size.
+    allocated_bytes = ((int(rgb.lines) + cy - 1) // cy * cy
+                       * ((int(rgb.samples) + cx - 1) // cx * cx)
+                       * ((band_count + cb - 1) // cb * cb) * 4)
+    free_bytes = shutil.disk_usage(output_root).free
+    if allocated_bytes > free_bytes * 0.80:
+        raise RuntimeError(
+            f"M0 fused float32 cube needs {cube_bytes / 1e12:.2f} TB logically "
+            f"and about {allocated_bytes / 1e12:.2f} TB with current Zarr chunks, "
+            f"but this output drive has {free_bytes / 1e12:.2f} TB free. "
+            "Use a bounded ROI or design an on-demand/compact fusion store; the full scan cannot be safely materialized here."
+        )
+    if allocated_bytes > 2_000_000_000 and not payload.get("m0_streaming", False):
+        raise RuntimeError(
+            f"M0 cube would allocate about {allocated_bytes / 1e9:.1f} GB; "
+            "set m0_streaming=true for large inputs."
+        )
+    return allocated_bytes
 
 
 def _run_m11(accessor: FusionResultAccessor, payload: dict[str, Any], output_root: Path) -> dict[str, Any]:
@@ -454,6 +489,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
             "bbox_xyxy_rgb_reference": rgb_bbox,
             "angle_deg": box.get("angle_deg"),
             "confidence": box.get("confidence"),
+            "m1_1_needs_manual_review": bool(box.get("needs_manual_review", False)),
             "corrected_image": box.get("output_image"),
             "m1_1_mask": box.get("output_mask"),
             "transform_stack_ref": str(transform_stack_path),
@@ -505,9 +541,19 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
     context_path = output_root / "preprocess_context.json"
     result_path = output_root / "pipeline_result.json"
     write_json(context_path, context)
+    box_review_items = [
+        {
+            "box_id": box["box_id"],
+            "m1_1_needs_manual_review": bool(box.get("m1_1_needs_manual_review", False)),
+            "m1_2_warnings": box["m1_2"].get("warnings", []),
+            "m1_3_warnings": box["m1_3"].get("warnings", []),
+        }
+        for box in context["boxes"]
+        if box.get("m1_1_needs_manual_review") or box["m1_2"].get("warnings") or box["m1_3"].get("warnings")
+    ]
     result = {
         "status": "succeeded",
-        "quality_status": "needs_review" if warnings or any(box["m1_3"].get("warnings") for box in context["boxes"]) else "passed_automated_checks",
+        "quality_status": "needs_review" if warnings or box_review_items else "passed_automated_checks",
         "created_at": _now(),
         "output_dir": str(output_root),
         "output_files": {
@@ -521,6 +567,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
             "segment_count": sum(int(box["m1_3"]["metrics"]["segment_count"]) for box in context["boxes"]),
         },
         "warnings": context["warnings"],
+        "box_review_items": box_review_items,
     }
     write_json(result_path, result)
     return result

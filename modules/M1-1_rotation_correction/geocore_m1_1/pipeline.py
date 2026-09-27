@@ -48,6 +48,12 @@ def run_m11_rotation_correction(
         )
         detection_preview = str(detection_preview_path)
 
+    if cfg.expected_box_count is not None and cfg.expected_box_count != len(detection.candidates):
+        raise RuntimeError(
+            f"Expected {cfg.expected_box_count} boxes, detected {len(detection.candidates)}. "
+            f"Inspect {detection_preview or output_root}."
+        )
+
     results: list[CoreBoxResult] = []
     for candidate in detection.candidates:
         crop, inner_bbox, source_crop_bbox = _crop_for_angle_with_bbox(image, candidate.bbox_xyxy_raw, cfg)
@@ -112,13 +118,6 @@ def run_m11_rotation_correction(
     metadata_path = output_root / "metadata.json"
     metadata_path.write_text(json.dumps(batch.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
     batch.qa_report = write_qa_report(batch, output_root / "qa_report.md")
-
-    if cfg.expected_box_count is not None and cfg.expected_box_count != batch.box_count:
-        # Keep the outputs for diagnosis, but make the mismatch visible to callers.
-        raise RuntimeError(
-            f"Expected {cfg.expected_box_count} boxes, detected {batch.box_count}. "
-            f"Inspect {detection_preview or metadata_path}."
-        )
 
     return batch
 

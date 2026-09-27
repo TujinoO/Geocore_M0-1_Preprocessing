@@ -25,20 +25,22 @@ M1-2 模块负责从岩心箱或岩心柱影像中提取岩心实体区域，输
 3. 将权重放入模型包；
 4. 更新模型卡和模型清单。
 
-发布后软件只调用模型包：
+当前 M0/M1 统一入口固定调用 V4 模型包；以下 V1 目录仅为旧版资料，不能当作当前默认部署版本。发布后软件调用的 V4 模型包为：
 
 ```text
-models/core_mask_unet_v1/
+models/core_mask_unet_v4/
   weights.pth
   model_manifest.json
   model_card.md
 ```
 
-默认模型清单路径：
+当前模型清单路径：
 
 ```text
-models/core_mask_unet_v1/model_manifest.json
+models/core_mask_unet_v4/model_manifest.json
 ```
+
+Git 源码不包含约 69 MB 的 V4 权重。新克隆仓库先在项目根目录运行 `./scripts/install_v4_model.ps1` 下载权重并校验 SHA-256；模型清单标明这是需人工复核的开发验证版本，不代表跨场景无人值守验收。
 
 ## API 启动
 

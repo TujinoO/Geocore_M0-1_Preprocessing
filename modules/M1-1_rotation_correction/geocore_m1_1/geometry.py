@@ -12,6 +12,10 @@ from .models import AngleEstimate
 def estimate_box_angle(crop: np.ndarray, inner_bbox_xyxy: tuple[int, int, int, int], config: M11Config) -> AngleEstimate:
     """Estimate correction angle from vertical edge evidence inside a core box."""
 
+    orange_angle = _estimate_angle_by_orange_frame(crop, inner_bbox_xyxy, config)
+    if orange_angle is not None:
+        return orange_angle
+
     gray = to_gray(crop)
     h, w = gray.shape
     x0, y0, x1, y1 = inner_bbox_xyxy
@@ -28,6 +32,54 @@ def estimate_box_angle(crop: np.ndarray, inner_bbox_xyxy: tuple[int, int, int, i
             return projection
 
     return _estimate_angle_by_side_edges(gray, (x0, y0, x1, y1), config)
+
+
+def _estimate_angle_by_orange_frame(
+    crop: np.ndarray, inner_bbox_xyxy: tuple[int, int, int, int], config: M11Config
+) -> AngleEstimate | None:
+    """Align orange vertical dividers, avoiding misleading rock fractures."""
+
+    if crop.ndim != 3 or crop.shape[2] < 3:
+        return None
+    frame_sample = crop[::max(1, crop.shape[0] // 2048), ::max(1, crop.shape[1] // 512), :3].astype(np.int16)
+    sr, sg, sb = frame_sample[:, :, 0], frame_sample[:, :, 1], frame_sample[:, :, 2]
+    frame_orange = (sr > 125) & (sr > 1.35 * sg) & (sg > 1.35 * sb) & (sr - sb > 80)
+    left, right = int(frame_sample.shape[1] * 0.10), int(frame_sample.shape[1] * 0.90)
+    row_coverage = frame_orange[:, left:right].mean(axis=1)
+    band = max(1, int(len(row_coverage) * 0.10))
+    if not (np.any(row_coverage[:band] > 0.35) and np.any(row_coverage[-band:] > 0.35)):
+        return None
+    x0, y0, x1, y1 = inner_bbox_xyxy
+    trim = int((y1 - y0 + 1) * 0.09)
+    ya, yb = max(0, y0 + trim), min(crop.shape[0], y1 - trim)
+    xa, xb = max(0, x0), min(crop.shape[1], x1)
+    if yb - ya < 100 or xb - xa < 50:
+        return None
+    roi = crop[ya:yb, xa:xb, :3].astype(np.int16)
+    red, green, blue = roi[:, :, 0], roi[:, :, 1], roi[:, :, 2]
+    orange = (red > 125) & (red > 1.35 * green) & (green > 1.35 * blue) & (red - blue > 80)
+    ys, xs = np.nonzero(orange)
+    if len(xs) < 2000:
+        return None
+    if len(xs) > config.angle_scan_max_points:
+        keep = np.linspace(0, len(xs) - 1, config.angle_scan_max_points).astype(np.int64)
+        ys, xs = ys[keep], xs[keep]
+    weights = np.ones(len(xs), dtype=np.float64)
+    angles = np.arange(-config.angle_scan_range_deg, config.angle_scan_range_deg + 0.025,
+                       config.angle_scan_coarse_step_deg, dtype=np.float64)
+    coarse = _score_projection_angles(xs, ys, weights, roi.shape[1], roi.shape[0], angles)
+    if coarse is None:
+        return None
+    coarse_angle = coarse[0]
+    fine_angles = np.arange(coarse_angle - 0.10, coarse_angle + 0.105,
+                            config.angle_scan_fine_step_deg, dtype=np.float64)
+    fine = _score_projection_angles(xs, ys, weights, roi.shape[1], roi.shape[0], fine_angles)
+    if fine is None or fine[2] < 0.08:
+        return None
+    angle = float(fine[0] + config.manual_angle_delta_deg)
+    return AngleEstimate(angle, min(1.0, fine[2] / 0.15),
+                         -math.tan(math.radians(angle)), -math.tan(math.radians(angle)),
+                         len(xs), "orange_vertical_frame")
 
 
 def _estimate_angle_by_side_edges(

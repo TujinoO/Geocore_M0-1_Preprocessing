@@ -219,6 +219,8 @@ python -m geocore_preprocessing.cli run `
 
 实际运行建议同时提供 `--expected-box-count`、每箱真实深度列表 `--box-depths-json`（按检测到的浅→深箱序排列，每项为 `[起始米, 终止米]`）。`--lane-count` 留空即逐箱自动识别槽数；不确定时会停止，而不会默认按 5 槽切。槽的左右顺序和柱体上下深度方向无法仅凭 RGB 可靠证明，核对箱号/野外记录后才加 `--depth-order-confirmed`。不提供每箱深度时，等分深度只是待审核估计。
 
+M0 当前把全部 NIR/SWIR 波段写到 RGB 全分辨率网格的未压缩 Zarr。统一入口会先按 Zarr 边界块检查磁盘容量，并要求大任务开启 `--m0-streaming`；例如 ZK5511 整幅扫描的立方体约需 9.47 TB 当前格式空间，不能在本机现有约 1.57 TB 空闲盘上直接全幅运行。真实 ZKH3 小范围配准 ROI 已通过流式融合验证；整幅融合还需按需读取或紧凑存储设计，不能将 ROI 烟测说成全幅验收。
+
 本机 V4 模型包位于 `modules/M1-2_foreground_mask/models/core_mask_unet_v4`。源码仓库跟踪模型清单和校验值；`weights.pth` 为约 69 MB 的二进制权重，放在本仓库 GitHub Release，不进入普通 Git 历史。新克隆仓库先运行 `./scripts/install_v4_model.ps1` 下载并核对 SHA-256；否则模型模式会明确报错，不能以 `classical` 兜底结果冒充 V4。
 
 ## 六、前后端协作原则
