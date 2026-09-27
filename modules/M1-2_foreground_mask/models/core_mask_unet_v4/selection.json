@@ -1,0 +1,118 @@
+{
+  "selected": {
+    "source_tile_size": 2048,
+    "threshold": 0.5,
+    "guard_passed": true,
+    "score": 0.9267656741037119,
+    "val": {
+      "dice": 0.9036483468830194,
+      "iou": 0.8242322108184028,
+      "precision": 0.879317387324192,
+      "recall": 0.9293641134372062,
+      "false_positive_rate": 0.11207876935291976,
+      "tp": 90247050,
+      "fp": 12386028,
+      "fn": 6859185,
+      "tn": 98125785
+    },
+    "adaptation_dev": {
+      "dice": 0.9498830013244044,
+      "iou": 0.9045496859134687,
+      "precision": 0.9646884555031919,
+      "recall": 0.9355251282306516,
+      "false_positive_rate": 0.04542233571445317,
+      "tp": 100675139,
+      "fp": 3685122,
+      "fn": 6938367,
+      "tn": 77445052
+    }
+  },
+  "trials": [
+    {
+      "source_tile_size": 1536,
+      "threshold": 0.45,
+      "guard_passed": true,
+      "score": 0.9253152374564958,
+      "val": {
+        "dice": 0.9023018999845176,
+        "iou": 0.8219945902901636,
+        "precision": 0.887888833616287,
+        "recall": 0.9171906211789593,
+        "false_positive_rate": 0.1017626233314985,
+        "tp": 89064928,
+        "fp": 11245972,
+        "fn": 8041307,
+        "tn": 99265841
+      },
+      "adaptation_dev": {
+        "dice": 0.948328574928474,
+        "iou": 0.9017346600094003,
+        "precision": 0.9640127137439913,
+        "recall": 0.9331466163735991,
+        "false_positive_rate": 0.04620623641211468,
+        "tp": 100419179,
+        "fp": 3748720,
+        "fn": 7194327,
+        "tn": 77381454
+      }
+    },
+    {
+      "source_tile_size": 2048,
+      "threshold": 0.5,
+      "guard_passed": true,
+      "score": 0.9267656741037119,
+      "val": {
+        "dice": 0.9036483468830194,
+        "iou": 0.8242322108184028,
+        "precision": 0.879317387324192,
+        "recall": 0.9293641134372062,
+        "false_positive_rate": 0.11207876935291976,
+        "tp": 90247050,
+        "fp": 12386028,
+        "fn": 6859185,
+        "tn": 98125785
+      },
+      "adaptation_dev": {
+        "dice": 0.9498830013244044,
+        "iou": 0.9045496859134687,
+        "precision": 0.9646884555031919,
+        "recall": 0.9355251282306516,
+        "false_positive_rate": 0.04542233571445317,
+        "tp": 100675139,
+        "fp": 3685122,
+        "fn": 6938367,
+        "tn": 77445052
+      }
+    },
+    {
+      "source_tile_size": 2560,
+      "threshold": 0.5,
+      "guard_passed": true,
+      "score": 0.9240537513496452,
+      "val": {
+        "dice": 0.896109308941768,
+        "iou": 0.8117735897226591,
+        "precision": 0.8534176650073879,
+        "recall": 0.9432971116633242,
+        "false_positive_rate": 0.1423662102077721,
+        "tp": 91600031,
+        "fp": 15733148,
+        "fn": 5506204,
+        "tn": 94778665
+      },
+      "adaptation_dev": {
+        "dice": 0.9519981937575223,
+        "iou": 0.9083936574220531,
+        "precision": 0.9617549187157328,
+        "recall": 0.9424374390329779,
+        "false_positive_rate": 0.04971049365677436,
+        "tp": 101418997,
+        "fp": 4033021,
+        "fn": 6194509,
+        "tn": 77097153
+      }
+    }
+  ],
+  "independent_test_available": false,
+  "scope": "ZK6711 held-out-from-gradient validation and known-hole ZKZ4-5 adaptation development; both used for model selection."
+}

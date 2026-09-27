@@ -26,13 +26,13 @@ metadata when the input image has it.
 The default profile reads:
 
 ```text
-models/core_mask_unet_v1/model_manifest.json
+models/core_mask_unet_v4/model_manifest.json
 ```
 
-Before formal deployment, put the trained model weights here:
+Install the matching V4 weights here (SHA-256 is checked against the manifest):
 
 ```text
-models/core_mask_unet_v1/weights.pth
+models/core_mask_unet_v4/weights.pth
 ```
 
 The model manifest controls the model type, normalization statistics, tile size,
@@ -41,7 +41,7 @@ send these internal parameters.
 
 ## Start
 
-Run from `AGRS_semantic_segmentation-main`:
+Run from `modules/M1-2_foreground_mask`:
 
 ```powershell
 python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
@@ -86,7 +86,7 @@ backend follow-up items for host-system integration.
   "image_pattern": "*.tif",
   "model_profile": "default",
   "threshold": 0.5,
-  "enable_postprocess": true,
+  "enable_postprocess": false,
   "output_preview": true
 }
 ```

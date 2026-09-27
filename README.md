@@ -185,7 +185,7 @@ python -m geocore_preprocessing.cli run `
   --depth-start-m 132.0 `
   --depth-end-m 140.0 `
   --m1-2-engine model `
-  --m1-2-model-package .\modules\M1-2_foreground_mask\models\core_mask_unet_v1 `
+  --m1-2-model-package .\modules\M1-2_foreground_mask\models\core_mask_unet_v4 `
   --segment-length-cm 10
 ```
 
@@ -200,7 +200,7 @@ python -m geocore_preprocessing.cli run `
   --depth-start-m 132.0 `
   --depth-end-m 140.0 `
   --m1-2-engine model `
-  --m1-2-model-package .\modules\M1-2_foreground_mask\models\core_mask_unet_v1
+  --m1-2-model-package .\modules\M1-2_foreground_mask\models\core_mask_unet_v4
 ```
 
 调试时可使用轻量兜底掩膜：
@@ -286,7 +286,7 @@ python -B modules\M0-1_image_fusion\tests\run_tests.py
 - `m1_transform_stack.json`
 - `segments_with_cube_refs.json`
 
-生产验收时应使用训练好的 M1-2 模型包重新跑完整链路。
+当前 M0&1 默认固定为 `core_mask_unet_v4`；模型权重不在 Git 中，必须先安装同版权重并通过 SHA-256 校验。未安装时默认 `model` 模式显式报错，不会悄悄改用 V1/V2 或 classical。`classical` 仅供明确指定的调试/回退使用。V4 目前只有开发与工程验证证据，新的独立钻孔验收仍待完成；应用到新场景时须人工复核掩膜。
 
 ## 十、后续维护建议
 

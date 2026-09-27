@@ -141,7 +141,7 @@ def _bbox_to_reference(
 
 
 def _build_m12_predictor(payload: dict[str, Any]) -> tuple[Any | None, dict[str, Any]]:
-    engine = str(payload.get("m1_2_engine", "auto")).lower()
+    engine = str(payload.get("m1_2_engine", "model")).lower()
     info: dict[str, Any] = {"engine_requested": engine, "engine_used": None, "model_package": None, "warnings": []}
     if engine == "classical":
         info["engine_used"] = "classical"
@@ -149,10 +149,10 @@ def _build_m12_predictor(payload: dict[str, Any]) -> tuple[Any | None, dict[str,
 
     model_package = find_m12_model_package(payload.get("m1_2_model_package"))
     if model_package is None:
-        message = "M1-2 model package was not found; falling back to classical mask."
+        message = "M1-2 V4 model package was not found. Install core_mask_unet_v4 or provide --m1-2-model-package."
         if engine == "model":
             raise FileNotFoundError(message)
-        info["warnings"].append(message)
+        info["warnings"].append(message + " Explicit auto mode is falling back to classical mask.")
         info["engine_used"] = "classical"
         return None, info
 

@@ -54,23 +54,12 @@ def bootstrap_module_paths() -> list[Path]:
     return list(reversed(added))
 
 
-def find_m12_model_package(explicit: str | None = None, profile: str = "core_mask_unet_v1") -> Path | None:
+def find_m12_model_package(explicit: str | None = None, profile: str = "core_mask_unet_v4") -> Path | None:
     """Resolve a foreground-mask model package.
 
     Model weights, cards, manifests, and training assets are consolidated under
     the M1-2 module. Callers may still provide an explicit package path.
     """
 
-    candidates: list[Path] = []
-    if explicit:
-        candidates.append(Path(explicit))
-    candidates.extend(
-        [
-            module_path("M1-2") / "models" / profile,
-            module_path("M1-2") / "models" / "core_mask_unet_v2",
-        ]
-    )
-    for candidate in candidates:
-        if (candidate / "model_manifest.json").is_file():
-            return candidate
-    return None
+    candidate = Path(explicit) if explicit else module_path("M1-2") / "models" / profile
+    return candidate.resolve() if (candidate / "model_manifest.json").is_file() else None

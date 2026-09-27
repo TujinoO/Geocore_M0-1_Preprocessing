@@ -116,7 +116,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--limit-boxes", type=int, help="Process only the first N detected boxes.")
     run.add_argument("--m1-1-input-image", help="Override the image used by M1-1. Defaults to manifest preview_rgb.")
     run.add_argument("--m1-1-hdr-path", help="Optional ENVI header when --m1-1-input-image is a .dat file.")
-    run.add_argument("--m1-2-engine", choices=["auto", "model", "classical"], default="auto")
+    run.add_argument("--m1-2-engine", choices=["auto", "model", "classical"], default="model")
     run.add_argument("--m1-2-model-package", help="Path to M1-2 model package directory containing model_manifest.json.")
     run.add_argument("--m1-2-threshold", type=float)
     run.add_argument("--segment-length-cm", type=float, default=10.0)

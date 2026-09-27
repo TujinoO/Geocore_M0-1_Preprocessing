@@ -1,0 +1,62 @@
+{
+  "model_name": "CoreMaskUNet",
+  "model_version": "v4.0.0-hard-example-20260927",
+  "framework": "pytorch",
+  "task": "M1-2 foreground mask",
+  "num_classes": 2,
+  "weights": "weights.pth",
+  "weights_sha256": "896495b3facae1369e95dc5e05def561b1cb7df08b15f2b214b7bcc0d747a32d",
+  "output_activation": "sigmoid",
+  "input": {
+    "channels": 3,
+    "image_size": 512,
+    "mean": [
+      49.915241984577925,
+      39.50271408279221,
+      26.579417835582387
+    ],
+    "std": [
+      38.24251146916756,
+      27.62466598435947,
+      22.80378229324591
+    ],
+    "color_order": "RGB",
+    "dtype": "uint8"
+  },
+  "inference": {
+    "source_tile_size": 2048,
+    "model_input_size": 512,
+    "overlap": 0.25,
+    "threshold": 0.5,
+    "amp": true,
+    "device": "auto"
+  },
+  "postprocess": {
+    "enable": false
+  },
+  "review_required": true,
+  "deployment_warning": "Adapted candidate: development evidence only; ZKZ4-5 is no longer independent. Review outputs on new scenes.",
+  "training": {
+    "weight_interpolation": {
+      "V3_fraction": 0.25,
+      "frozen_bn_V4_fraction": 0.75
+    },
+    "selection_score": 0.9266687737980367,
+    "validation_dice": 0.9021442281291115,
+    "adaptation_development_dice": 0.9511933194669618,
+    "independent_test_available": false
+  },
+  "calibration": {
+    "selection_file": "selection.json",
+    "independent_test_available": false
+  },
+  "deployment": {
+    "engineering_checks_passed": true,
+    "independent_test_available": false,
+    "release_status": "development_validated_manual_review_required",
+    "unattended_universal_production_accepted": false,
+    "input": "uint8 RGB",
+    "label": "foreground core=255, background=0",
+    "normalization": "as specified in model manifest"
+  }
+}

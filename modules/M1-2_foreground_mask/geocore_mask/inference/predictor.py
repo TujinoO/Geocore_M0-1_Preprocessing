@@ -62,6 +62,16 @@ class CoreMaskPredictor:
         enable_postprocess: Optional[bool] = None,
         output_preview: bool = True,
     ) -> Dict[str, Any]:
+        if ('source_tile_size' in self.manifest.get('inference', {})
+                and Path(input_path).suffix.lower() in {'.dat', '.tif', '.tiff'}):
+            from copy import deepcopy
+            from geocore_mask.inference.streaming import predict_raster
+            streaming_manifest = deepcopy(self.manifest)
+            if threshold is not None:
+                streaming_manifest['inference']['threshold'] = float(threshold)
+            if enable_postprocess:
+                raise ValueError('Streaming V3 uses raw calibrated masks; global morphology is not enabled')
+            return predict_raster(self.model, streaming_manifest, self.device, input_path, output_dir)
         started = time.time()
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -76,9 +86,12 @@ class CoreMaskPredictor:
         mask = (prob >= threshold_value).astype(np.uint8)
 
         warnings: list[str] = []
+        if self.manifest.get('deployment_warning'):
+            warnings.append(self.manifest['deployment_warning'])
         post_enabled = bool(post_cfg.get("enable", True) if enable_postprocess is None else enable_postprocess)
         if post_enabled:
-            mask, warnings = refine_mask(mask, post_cfg)
+            mask, post_warnings = refine_mask(mask, post_cfg)
+            warnings.extend(post_warnings)
 
         components = mask_to_components(mask, int(post_cfg.get("max_contour_points", 800)))
 
@@ -91,7 +104,10 @@ class CoreMaskPredictor:
 
         save_mask_png(mask, mask_png)
         save_tiff_like(mask * 255, mask_tif, reference=image_data, dtype=np.uint8)
-        save_tiff_like(np.clip(prob * 255, 0, 255), probability_tif, reference=image_data, dtype=np.uint8)
+        if 'source_tile_size' in self.manifest.get('inference', {}):
+            save_tiff_like(prob, probability_tif, reference=image_data, dtype=np.float32)
+        else:
+            save_tiff_like(np.clip(prob * 255, 0, 255), probability_tif, reference=image_data, dtype=np.uint8)
         if output_preview:
             save_overlay_png(image, mask, overlay_png)
 
@@ -137,6 +153,9 @@ class CoreMaskPredictor:
 
     @torch.no_grad()
     def predict_probability(self, image: np.ndarray) -> np.ndarray:
+        if 'source_tile_size' in self.manifest.get('inference', {}):
+            from geocore_mask.inference.scaled import predict_array
+            return predict_array(self.model, image, self.manifest, self.device)
         image = self._prepare_image(image)
         h, w, _ = image.shape
         infer_cfg = self.manifest.get("inference", {})

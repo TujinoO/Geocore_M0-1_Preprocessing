@@ -20,7 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run M1-2 foreground mask extraction for a folder of images.")
     parser.add_argument("--input-dir", required=True)
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--model-package", default="models/core_mask_unet_v2")
+    parser.add_argument("--model-package", default="models/core_mask_unet_v4")
     parser.add_argument("--pattern", action="append", default=None)
     parser.add_argument("--threshold", type=float, default=None)
     parser.add_argument("--disable-postprocess", action="store_true")
@@ -66,7 +66,7 @@ def main() -> int:
             image_path,
             sample_output,
             threshold=args.threshold,
-            enable_postprocess=not args.disable_postprocess,
+            enable_postprocess=False if args.disable_postprocess else None,
             output_preview=True,
         )
         summary.append(
