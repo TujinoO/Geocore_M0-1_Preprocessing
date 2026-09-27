@@ -26,10 +26,10 @@
   "m1_3": {
     "segment_length_cm": 10,
     "overlap_cm": 0,
-    "lane_count": 5,
+    "lane_count": 0,
     "lane_order": "left_to_right",
     "lane_direction": "top_to_bottom",
-    "gap_policy": "close_artificial_gaps"
+    "gap_policy": "preserve_all_gaps"
   },
   "depth": {
     "depth_start_m": 132.0,

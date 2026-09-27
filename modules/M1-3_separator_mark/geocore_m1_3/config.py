@@ -30,7 +30,7 @@ class MaskRefineConfig:
 class ReconstructionConfig:
     strip_width_mode: str = "max_lane_width"
     background: str = "transparent"
-    gap_policy: str = "close_artificial_gaps"
+    gap_policy: str = "preserve_all_gaps"  # never compress possible missing core without an explicit choice
     row_keep_min_coverage: float = 0.015
     row_keep_padding_px: int = 2
     large_gap_warning_px: int = 80

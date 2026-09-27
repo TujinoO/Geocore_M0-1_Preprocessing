@@ -18,7 +18,7 @@
   "reconstruction": {
     "strip_width_mode": "max_lane_width",
     "background": "transparent",
-    "gap_policy": "close_artificial_gaps",
+    "gap_policy": "preserve_all_gaps",
     "row_keep_min_coverage": 0.015,
     "row_keep_padding_px": 2,
     "large_gap_warning_px": 80

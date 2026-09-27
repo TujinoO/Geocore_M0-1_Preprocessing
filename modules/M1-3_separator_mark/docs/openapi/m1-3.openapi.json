@@ -903,7 +903,7 @@
             ],
             "enum": [
               "close_artificial_gaps",
-              "preserve_visual_gaps",
+              "preserve_all_gaps",
               null
             ]
           }
@@ -914,8 +914,8 @@
         "properties": {
           "lane_count": {
             "type": "integer",
-            "minimum": 1,
-            "default": 5
+            "minimum": 0,
+            "default": 0
           },
           "lane_order": {
             "type": "string",
@@ -956,7 +956,7 @@
         "properties": {
           "enable": {
             "type": "boolean",
-            "default": true
+            "default": false
           },
           "outside_lane_remove": {
             "type": "boolean",
@@ -1614,7 +1614,7 @@
           "depth_start_m": 70.0,
           "depth_end_m": 75.0,
           "layout": {
-            "lane_count": 5,
+            "lane_count": 0,
             "lane_order": "left_to_right",
             "lane_direction": "top_to_bottom"
           },
@@ -1626,7 +1626,7 @@
             "enable": true,
             "outside_lane_remove": true
           },
-          "gap_policy": "close_artificial_gaps",
+          "gap_policy": "preserve_all_gaps",
           "missing_intervals": [],
           "depth_anchors": []
         }

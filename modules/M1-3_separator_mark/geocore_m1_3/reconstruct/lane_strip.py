@@ -59,21 +59,26 @@ def build_lane_strip(
 
     warnings: list[dict] = []
     local_height, local_width = crop_mask.shape
+    if config.gap_policy not in {"close_artificial_gaps", "preserve_all_gaps"}:
+        raise ValueError(f"Unsupported gap_policy: {config.gap_policy}")
+    row_counts = crop_mask.sum(axis=1)
+    active = row_counts > max(1, int(local_width * config.row_keep_min_coverage))
+    intervals = _active_row_intervals(active, config.row_keep_padding_px, local_height)
+    for before, after in zip(intervals, intervals[1:]):
+        gap = after[0] - before[1]
+        if gap >= config.large_gap_warning_px:
+            compressed = config.gap_policy == "close_artificial_gaps"
+            warnings.append({
+                "code": "large_gap_requires_review" if compressed else "large_gap_preserved_requires_review",
+                "message": (
+                    "A large blank interval was compressed inside a lane; confirm whether it is lost core."
+                    if compressed else
+                    "A large blank interval was preserved inside a lane; confirm whether it represents lost core."
+                ),
+                "lane_index": lane.lane_index,
+                "gap_pixels": int(gap),
+            })
     if config.gap_policy == "close_artificial_gaps":
-        row_counts = crop_mask.sum(axis=1)
-        active = row_counts > max(1, int(local_width * config.row_keep_min_coverage))
-        intervals = _active_row_intervals(active, config.row_keep_padding_px, local_height)
-        for before, after in zip(intervals, intervals[1:]):
-            gap = after[0] - before[1]
-            if gap >= config.large_gap_warning_px:
-                warnings.append(
-                    {
-                        "code": "large_gap_requires_review",
-                        "message": "A large blank interval was compressed inside a lane; confirm whether it is lost core.",
-                        "lane_index": lane.lane_index,
-                        "gap_pixels": int(gap),
-                    }
-                )
         keep_indices = np.concatenate([np.arange(start, end) for start, end in intervals if end > start])
         crop_rgb = crop_rgb[keep_indices]
         crop_mask = crop_mask[keep_indices]

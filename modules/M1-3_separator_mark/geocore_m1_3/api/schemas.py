@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -32,7 +32,7 @@ class SegmentDepthRequest(BaseModel):
     depth_mapping: dict[str, Any] = Field(default_factory=dict)
     missing_intervals: list[dict[str, Any]] = Field(default_factory=list)
     depth_anchors: list[dict[str, Any]] = Field(default_factory=list)
-    gap_policy: str | None = None
+    gap_policy: Literal["close_artificial_gaps", "preserve_all_gaps"] | None = None
 
 
 class TaskResponse(BaseModel):
