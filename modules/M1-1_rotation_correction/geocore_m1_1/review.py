@@ -95,6 +95,7 @@ def manual_correct_box(
             "angle_deg": float(angle_deg),
             "confidence": float(confidence),
             "needs_manual_review": False,
+            "geometry_review_required": False,
             "rotation_matrix_2x3": matrix,
             "output_image": str(image_path),
             "output_mask": str(mask_path),

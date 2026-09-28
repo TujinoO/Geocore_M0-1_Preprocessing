@@ -9,6 +9,7 @@ from typing import Any, Mapping
 @dataclass
 class LayoutConfig:
     lane_count: int = 0  # 0 = infer from the foreground mask; never silently assume five slots
+    lane_dividers_x: list[int] | None = None  # reviewed physical separators, in corrected-image pixels
     lane_order: str = "left_to_right"
     lane_direction: str = "top_to_bottom"
     allow_snake_order: bool = False

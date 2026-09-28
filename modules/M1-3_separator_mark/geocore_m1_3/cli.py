@@ -30,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     segment.add_argument("--config-path", help="Optional JSON config path.")
     segment.add_argument("--task-id", help="Optional deterministic task id.")
     segment.add_argument("--lane-count", type=int, help="Expected lane count.")
+    segment.add_argument("--lane-dividers-json", help="JSON list of reviewed internal divider x coordinates in the corrected image.")
     segment.add_argument("--lane-order", choices=["left_to_right", "right_to_left"], help="Lane ordering rule.")
     segment.add_argument("--lane-direction", choices=["top_to_bottom", "bottom_to_top"], help="Lane depth direction.")
     segment.add_argument("--segment-length-cm", type=float, help="Segment length in centimeters.")
@@ -60,6 +61,11 @@ def main(argv: list[str] | None = None) -> None:
         layout: dict[str, Any] = {}
         if args.lane_count is not None:
             layout["lane_count"] = args.lane_count
+        if args.lane_dividers_json:
+            dividers = json.loads(Path(args.lane_dividers_json).read_text(encoding="utf-8"))
+            if not isinstance(dividers, list):
+                raise ValueError("--lane-dividers-json must contain a JSON list")
+            layout["lane_dividers_x"] = dividers
         if args.lane_order:
             layout["lane_order"] = args.lane_order
         if args.lane_direction:

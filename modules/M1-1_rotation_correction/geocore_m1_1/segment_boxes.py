@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -51,21 +51,47 @@ def detect_core_boxes(image: np.ndarray, config: M11Config) -> DetectionResult:
     x0_band = int(width * config.horizontal_band_left_ratio)
     x1_band = int(width * config.horizontal_band_right_ratio)
     peaks = _detect_horizontal_boundary_peaks(gray, x0_band, x1_band, config)
-    segments = _pair_boundary_peaks(peaks, x1_band - x0_band, config)
-    segments = _refine_segment_starts(segments, peaks, x1_band - x0_band, config)
+    # Large 7520-pixel scans contain five/six-slot trays whose end-rail
+    # periodicity is roughly twice the historical 2048-pixel case. Filtering
+    # for cross-width coherence rejects many rock-fracture peaks.
+    if image.shape[1] >= 5000:
+        coherent = [peak for peak in peaks if peak.coverage >= 0.30]
+        pairing = replace(config, expected_box_height_to_width=3.20,
+                          max_box_height_to_width=4.0)
+        pairing_peaks = coherent if len(coherent) >= 2 else peaks
+    else:
+        pairing = config
+        pairing_peaks = peaks
+    segments = _pair_boundary_peaks(pairing_peaks, x1_band - x0_band, pairing)
+    segments = _refine_segment_starts(segments, pairing_peaks, x1_band - x0_band, pairing)
 
-    default_x0 = int(width * config.x_crop_left_ratio)
-    default_x1 = int(width * config.x_crop_right_ratio)
+    wide_tray = image.shape[1] >= 5000
+    # A wide five/six-slot tray occupies most of the scan. The historical
+    # 17%-86% fallback was calibrated on the 2048-pixel narrow scans and
+    # clips the outer slots of the 7520-pixel scenes.
+    default_x0 = int(width * (0.10 if wide_tray else config.x_crop_left_ratio))
+    default_x1 = int(width * (0.94 if wide_tray else config.x_crop_right_ratio))
     thumb_boxes: list[tuple[int, int, int, int]] = []
     candidates: list[CoreBoxCandidate] = []
     raw_h, raw_w = image.shape[:2]
 
+    used_orange_sidewalls = False
     for index, (y0, y1, split_score) in enumerate(segments, start=1):
         y0 = max(0, min(height - 1, int(y0)))
         y1 = max(0, min(height - 1, int(y1)))
         if y1 <= y0:
             continue
-        x0, x1 = _estimate_x_span(gray, y0, y1, default_x0, default_x1, config)
+        # On wide dark trays, persistent orange columns are often ochre rocks
+        # or inner separators, not the outer frame (ZK5511 labelled case).
+        orange_span = None if wide_tray else _estimate_orange_sidewalls(thumbnail, y0, y1)
+        if orange_span is not None:
+            x0, x1 = orange_span
+            used_orange_sidewalls = True
+        else:
+            x0, x1 = _estimate_x_span(gray, y0, y1, default_x0, default_x1, config,
+                                     wide_tray=wide_tray)
+        if wide_tray:
+            y0 = _trim_wide_dark_prefix(gray, x0, x1, y0, y1)
         bbox_thumb = (x0, y0, x1, y1)
         bbox_raw = _scale_bbox_to_raw(bbox_thumb, scale_x, scale_y, raw_w, raw_h)
         box_id = f"box_{index:04d}"
@@ -78,6 +104,7 @@ def detect_core_boxes(image: np.ndarray, config: M11Config) -> DetectionResult:
                 bbox_xyxy_raw=bbox_raw,
                 boundary_score=float(split_score),
                 split_score=float(split_score),
+                geometry_review_required=True,
             )
         )
 
@@ -88,11 +115,22 @@ def detect_core_boxes(image: np.ndarray, config: M11Config) -> DetectionResult:
         scale_x=scale_x,
         scale_y=scale_y,
         boundary_peaks=peaks,
+        method="horizontal_peaks_orange_sidewalls" if used_orange_sidewalls else "horizontal_gradient_peaks",
     )
 
 
 def _detect_orange_frame_boxes(thumbnail: np.ndarray) -> list[tuple[tuple[int, int, int, int], float]] | None:
-    """Pair full-width orange top/bottom rails, not horizontal rock fractures."""
+    """Try the validated wide-frame rule before a narrow-frame hypothesis."""
+
+    return (_pair_orange_frame_boxes(thumbnail, 0.35, 0.65, 0.60, 25, 1.0, 0.72, 1.28)
+            or _pair_orange_frame_boxes(thumbnail, 0.25, 0.28, 0.15, 120, 0.65, 0.60, 1.40))
+
+
+def _pair_orange_frame_boxes(
+    thumbnail: np.ndarray, row_min: float, row_peak_min: float,
+    frame_width_min: float, run_divisor: int, height_min: float,
+    height_low: float, height_high: float,
+) -> list[tuple[tuple[int, int, int, int], float]] | None:
 
     if thumbnail.ndim != 3 or thumbnail.shape[2] < 3:
         return None
@@ -102,28 +140,28 @@ def _detect_orange_frame_boxes(thumbnail: np.ndarray) -> list[tuple[tuple[int, i
     orange = (red > 125) & (red > 1.35 * green) & (green > 1.35 * blue) & (red - blue > 80)
     left, right = int(width * 0.12), int(width * 0.88)
     coverage = orange[:, left:right].mean(axis=1)
-    active = np.flatnonzero(coverage > 0.35)
+    active = np.flatnonzero(coverage > row_min)
     if active.size == 0:
         return None
     breaks = np.flatnonzero(np.diff(active) > 1)
     starts = np.r_[0, breaks + 1]
     ends = np.r_[breaks + 1, active.size]
-    min_run = max(5, width // 25)
+    min_run = max(3, width // run_divisor)
     rails = [(int(active[s]), int(active[e - 1]) + 1)
              for s, e in zip(starts, ends)
              if int(active[e - 1]) - int(active[s]) + 1 >= min_run
-             and float(coverage[active[s]:active[e - 1] + 1].max()) > 0.65]
-    if len(rails) < 4:
+             and float(coverage[active[s]:active[e - 1] + 1].max()) > row_peak_min]
+    if len(rails) < 2:
         return None
     if len(rails) % 2:
-        raise RuntimeError(f"Ambiguous orange box-frame rails ({len(rails)}); review M1-1 thumbnail before cropping")
+        return None  # mixed or incomplete rails: use reviewed horizontal candidates
     centers = [(start + end) / 2 for start, end in rails]
     spans = np.asarray([centers[2 * i + 1] - centers[2 * i] for i in range(len(rails) // 2)])
     gaps = np.asarray([centers[2 * i + 2] - centers[2 * i + 1] for i in range(len(rails) // 2 - 1)])
     typical = float(np.median(spans))
-    if (typical < width or np.any(spans < typical * 0.72) or np.any(spans > typical * 1.28)
+    if (typical < width * height_min or np.any(spans < typical * height_low) or np.any(spans > typical * height_high)
             or np.any(gaps < 0) or np.any(gaps > typical * 0.28)):
-        raise RuntimeError("Orange box-frame pairing is inconsistent; manual M1-1 review is required")
+        return None
 
     # The saturated centre of a rail is much narrower than the actual box.
     # Use its less-saturated orange paint to locate the *outer* frame edges.
@@ -136,8 +174,8 @@ def _detect_orange_frame_boxes(thumbnail: np.ndarray) -> list[tuple[tuple[int, i
         bottom = rails[2 * index + 1]
         rail_pixels = np.concatenate((weak_orange[top[0]:top[1]], weak_orange[bottom[0]:bottom[1]]), axis=0)
         frame_x = np.flatnonzero(rail_pixels.mean(axis=0) > 0.30)
-        if frame_x.size < width * 0.60:
-            raise RuntimeError(f"Orange box {index + 1} has insufficient horizontal frame support")
+        if frame_x.size < width * frame_width_min:
+            return None
         x0 = max(0, int(frame_x[0]) - pad_x)
         x1 = min(width - 1, int(frame_x[-1]) + pad_x)
         y0 = max(0, top[0] - pad_y)
@@ -149,10 +187,52 @@ def _detect_orange_frame_boxes(thumbnail: np.ndarray) -> list[tuple[tuple[int, i
             next_top = rails[2 * index + 2][0]
             y1 = min(y1, (bottom[1] + next_top) // 2 - 1)
         if y1 <= y0:
-            raise RuntimeError(f"Orange box {index + 1} has invalid non-overlapping bounds")
+            return None
         score = float((coverage[top[0]:top[1]].max() + coverage[bottom[0]:bottom[1]].max()) / 2)
         boxes.append(((x0, y0, x1, y1), score))
     return boxes
+
+
+def _estimate_orange_sidewalls(
+    thumbnail: np.ndarray, y0: int, y1: int
+) -> tuple[int, int] | None:
+    """Locate persistent coloured outer rails, also on narrow two-slot trays.
+
+    A coloured rock or one central divider alone is not sufficient: support
+    must occur in two separated columns over a substantial part of the box.
+    """
+
+    if thumbnail.ndim != 3 or thumbnail.shape[2] < 3:
+        return None
+    height, width = thumbnail.shape[:2]
+    inset = max(2, int((y1 - y0) * 0.08))
+    ya, yb = max(0, y0 + inset), min(height, y1 - inset)
+    if yb - ya < 30:
+        return None
+    rgb = thumbnail[ya:yb, :, :3].astype(np.int16)
+    red, green, blue = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    frame = (red > 95) & (red > 1.20 * green) & (green > 1.12 * blue) & (red - blue > 45)
+    support = frame.mean(axis=0)
+    active = np.flatnonzero(support >= 0.16)
+    if active.size < 4:
+        return None
+    # The extremes must themselves be sustained rails, not isolated speckles.
+    runs = _column_runs(active)
+    rails = [(a, b) for a, b in runs if b - a >= 2 and support[a:b].max() >= 0.28]
+    if len(rails) < 2:
+        return None
+    left, right = rails[0][0], rails[-1][1]
+    if not width * 0.15 <= right - left <= width * 0.85:
+        return None
+    pad = max(3, int(width * 0.012))
+    return max(0, left - pad), min(width - 1, right + pad)
+
+
+def _column_runs(active: np.ndarray) -> list[tuple[int, int]]:
+    breaks = np.flatnonzero(np.diff(active) > 1)
+    starts = np.r_[0, breaks + 1]
+    ends = np.r_[breaks + 1, active.size]
+    return [(int(active[s]), int(active[e - 1]) + 1) for s, e in zip(starts, ends)]
 
 
 def _detect_horizontal_boundary_peaks(
@@ -262,6 +342,7 @@ def _estimate_x_span(
     default_x0: int,
     default_x1: int,
     config: M11Config,
+    wide_tray: bool = False,
 ) -> tuple[int, int]:
     """Return a conservative x-span; default ratios keep the whole box when edges are weak."""
 
@@ -273,8 +354,8 @@ def _estimate_x_span(
     hgrad[:, 1:-1] = np.abs(sub[:, 2:] - sub[:, :-2])
     profile = np.percentile(hgrad, 86, axis=0) + 0.35 * hgrad.mean(axis=0)
     profile = moving_average(profile, 9)
-    search_lo = int(width * 0.14)
-    search_hi = int(width * 0.92)
+    search_lo = int(width * (0.04 if wide_tray else 0.14))
+    search_hi = int(width * (0.99 if wide_tray else 0.92))
     threshold = np.percentile(profile[search_lo:search_hi], 62)
     peaks: list[tuple[int, float]] = []
     for x in range(search_lo + 4, search_hi - 4):
@@ -283,8 +364,8 @@ def _estimate_x_span(
             peaks.append((x, value))
 
     best: tuple[float, int, int] | None = None
-    min_w = int(width * 0.48)
-    max_w = int(width * 0.76)
+    min_w = int(width * (0.66 if wide_tray else 0.48))
+    max_w = int(width * (0.94 if wide_tray else 0.76))
     expected_w = max(1, default_x1 - default_x0)
     center = width / 2.0
     for left, left_score in peaks:
@@ -315,6 +396,43 @@ def _estimate_x_span(
     if right - left < int(width * 0.50):
         return int(default_x0), int(default_x1)
     return int(left), int(right)
+
+
+def _trim_wide_dark_prefix(gray: np.ndarray, x0: int, x1: int, y0: int, y1: int) -> int:
+    """Trim a long dark belt gap accidentally paired with the next tray.
+
+    The gate requires a sustained dark trough near the beginning *and* a
+    clearly brighter box body. A few dark rock rows cannot move the border.
+    This path remains review-required; it is not a universal tray detector.
+    """
+
+    height = y1 - y0
+    if height < 100 or x1 - x0 < 30:
+        return y0
+    xa = x0 + int((x1 - x0) * 0.15)
+    xb = x1 - int((x1 - x0) * 0.15)
+    rows = gray[y0:y1, xa:xb]
+    if rows.size == 0:
+        return y0
+    profile = np.percentile(rows, 70, axis=1)
+    profile = moving_average(profile, max(5, height // 250))
+    body = float(np.median(profile[int(height * 0.30):int(height * 0.80)]))
+    if body < 20:
+        return y0
+    scan_end = min(height, int(height * 0.25))
+    dark = profile[:scan_end] < 0.56 * body
+    active = np.flatnonzero(dark)
+    if active.size == 0:
+        return y0
+    for start, end in _column_runs(active):
+        if start > height * 0.06 or end - start < height * 0.045:
+            continue
+        if not height * 0.06 <= end <= height * 0.22:
+            continue
+        following = profile[end:min(height, end + max(5, int(height * 0.04)))]
+        if len(following) and float(np.median(following)) >= 0.58 * body:
+            return min(y1 - 1, y0 + end - 3)
+    return y0
 
 
 def _scale_bbox_to_raw(

@@ -84,7 +84,7 @@ def run_m11_rotation_correction(
             preview_path = str(preview_file)
 
         confidence = float(angle.confidence)
-        needs_review = confidence < cfg.confidence_threshold
+        needs_review = confidence < cfg.confidence_threshold or candidate.geometry_review_required
         results.append(
             CoreBoxResult(
                 box_id=candidate.box_id,
@@ -102,6 +102,7 @@ def run_m11_rotation_correction(
                 source_crop_bbox_raw=source_crop_bbox,
                 review_source_size_px=(crop.shape[1], crop.shape[0]),
                 review_source_scale_xy=review_scale,
+                geometry_review_required=candidate.geometry_review_required,
             )
         )
 

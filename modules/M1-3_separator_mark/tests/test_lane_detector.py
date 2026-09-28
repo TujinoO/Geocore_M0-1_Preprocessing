@@ -41,6 +41,26 @@ class LaneDetectorTest(unittest.TestCase):
         self.assertTrue(all(left < right for left, right in zip(centers, centers[1:])))
         self.assertGreater(lanes[0].bbox[0], 5)
 
+    def test_variable_two_and_six_physical_slots(self):
+        for count in (2, 6):
+            with self.subTest(count=count):
+                mask = np.zeros((320, count * 60 + 20), dtype=bool)
+                for index in range(count):
+                    mask[15:300, 15 + index * 60:55 + index * 60] = True
+                self.assertEqual(estimate_lane_count(mask).count, count)
+                self.assertEqual(len(detect_lanes(mask, LayoutConfig())), count)
+
+    def test_reviewed_dividers_preserve_empty_physical_slot(self):
+        mask = np.zeros((240, 320), dtype=bool)
+        for left in (14, 74, 194, 254):
+            mask[10:230, left:left + 42] = True
+        self.assertEqual(estimate_lane_count(mask).count, 4)
+        lanes = detect_lanes(mask, LayoutConfig(lane_dividers_x=[64, 124, 184, 244]))
+        self.assertEqual(len(lanes), 5)
+        self.assertEqual(lanes[2].foreground_pixels, 0)
+        with self.assertRaisesRegex(ValueError, "strictly increasing"):
+            detect_lanes(mask, LayoutConfig(lane_dividers_x=[64, 124, 124, 244]))
+
 
 if __name__ == "__main__":
     unittest.main()

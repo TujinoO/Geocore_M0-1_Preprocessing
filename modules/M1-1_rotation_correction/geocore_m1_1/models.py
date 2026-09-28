@@ -12,6 +12,7 @@ class CoreBoxCandidate:
     bbox_xyxy_raw: tuple[int, int, int, int]
     boundary_score: float
     split_score: float
+    geometry_review_required: bool = False
 
 
 @dataclass(slots=True)
@@ -42,6 +43,7 @@ class CoreBoxResult:
     review_source_size_px: tuple[int, int] | None = None
     review_source_scale_xy: tuple[float, float] = (1.0, 1.0)
     correction_status: str = "auto"
+    geometry_review_required: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

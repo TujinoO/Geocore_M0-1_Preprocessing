@@ -69,6 +69,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         "segment_length_cm": args.segment_length_cm,
         "overlap_cm": args.overlap_cm,
         "lane_count": args.lane_count,
+        "lane_dividers_by_box": _load_json(args.lane_dividers_by_box_json),
+        "source_slot_priors": _load_json(args.source_slot_priors_json),
         "lane_order": args.lane_order,
         "lane_direction": args.lane_direction,
         "gap_policy": args.gap_policy,
@@ -124,6 +126,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--segment-length-cm", type=float, default=10.0)
     run.add_argument("--overlap-cm", type=float, default=0.0)
     run.add_argument("--lane-count", type=int)
+    run.add_argument("--lane-dividers-by-box-json", help="JSON object: M1-1 box_XXXX id -> reviewed divider x list in corrected pixels.")
+    run.add_argument("--source-slot-priors-json", help="Advisory physical slot counts grouped by original RGB source; never overrides per-box geometry.")
     run.add_argument("--lane-order", choices=["left_to_right", "right_to_left"])
     run.add_argument("--lane-direction", choices=["top_to_bottom", "bottom_to_top"])
     run.add_argument("--gap-policy", choices=["close_artificial_gaps", "preserve_all_gaps"])

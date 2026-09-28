@@ -146,7 +146,19 @@ def detect_lanes(mask: np.ndarray, config: LayoutConfig, core_box_id: str = "cor
     if mask.ndim != 2:
         raise ValueError("detect_lanes expects a 2D mask.")
     estimate = estimate_lane_count(mask)
-    if config.lane_count == 0:
+    height, width = mask.shape
+    manual_dividers = config.lane_dividers_x
+    if manual_dividers is not None:
+        if not manual_dividers or any(not isinstance(value, int) for value in manual_dividers):
+            raise ValueError("lane_dividers_x must be a nonempty list of integer x coordinates")
+        if any(not 0 < value < width for value in manual_dividers) or any(
+            right <= left for left, right in zip(manual_dividers, manual_dividers[1:])
+        ):
+            raise ValueError("lane_dividers_x must be strictly increasing inside the image")
+        lane_count = len(manual_dividers) + 1
+        if config.lane_count not in (0, lane_count):
+            raise ValueError("lane_count conflicts with reviewed lane_dividers_x")
+    elif config.lane_count == 0:
         if estimate.reason != "ok":
             raise ValueError(f"Cannot infer a reliable core-box lane count: {estimate.reason} ({estimate.count} candidates)")
         lane_count = estimate.count
@@ -156,10 +168,11 @@ def detect_lanes(mask: np.ndarray, config: LayoutConfig, core_box_id: str = "cor
             raise ValueError("lane_count must be zero (auto) or a positive integer")
         if estimate.reason == "ok" and estimate.count != lane_count:
             raise ValueError(f"Configured lane_count={lane_count} conflicts with {estimate.count} lanes in the mask")
-    height, width = mask.shape
     projection = mask.sum(axis=0).astype(float)
     smoothed = _smooth(projection, max(5, width // 80))
-    if estimate.reason == "ok" and estimate.count == lane_count:
+    if manual_dividers is not None:
+        boundaries = [0, *manual_dividers, width]
+    elif estimate.reason == "ok" and estimate.count == lane_count:
         # Place splits inside the observed empty separator, not halfway
         # between potentially unequal-width lane centres.
         boundaries = [0]

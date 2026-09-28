@@ -10,10 +10,29 @@ import numpy as np
 
 from geocore_m1_1.config import M11Config
 from geocore_m1_1.io_envi import read_envi_image
-from geocore_m1_1.segment_boxes import detect_core_boxes
+from geocore_m1_1.segment_boxes import detect_core_boxes, _estimate_orange_sidewalls, _trim_wide_dark_prefix
 
 
 class OrangeBoxTests(unittest.TestCase):
+    def test_wide_dark_belt_prefix_is_trimmed_but_short_dark_top_is_not(self) -> None:
+        gray = np.full((1000, 512), 90, dtype=np.float32)
+        gray[20:130, 60:452] = 20
+        self.assertGreaterEqual(_trim_wide_dark_prefix(gray, 50, 462, 0, 1000), 120)
+        short = np.full((1000, 512), 90, dtype=np.float32)
+        short[20:45, 60:452] = 20
+        self.assertEqual(_trim_wide_dark_prefix(short, 50, 462, 0, 1000), 0)
+
+    def test_narrow_two_slot_sidewalls_do_not_use_old_wide_crop(self) -> None:
+        image = np.zeros((740, 512, 3), dtype=np.uint8)
+        image[30:710, 190:196] = (210, 80, 14)
+        image[30:710, 266:271] = (210, 80, 14)
+        image[30:710, 344:350] = (210, 80, 14)
+        span = _estimate_orange_sidewalls(image, 20, 720)
+        self.assertIsNotNone(span)
+        self.assertLessEqual(span[0], 190)
+        self.assertGreaterEqual(span[1], 349)
+        self.assertLess(span[1] - span[0], 210)
+
     def test_detects_complete_non_overlapping_orange_boxes(self) -> None:
         image = np.zeros((1840, 512, 3), dtype=np.uint8)
         for top in (100, 930):

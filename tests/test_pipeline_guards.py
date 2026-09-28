@@ -6,10 +6,34 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from geocore_preprocessing.fusion_accessor import ImageGrid
-from geocore_preprocessing.pipeline import _box_depth_windows, _preflight_m0_output, _resolve_m11_input
+from geocore_preprocessing.pipeline import _box_depth_windows, _preflight_m0_output, _resolve_m11_input, _run_m13_for_box
 
 
 class PipelineGuardsTest(unittest.TestCase):
+    def test_per_box_reviewed_dividers_reach_m13(self):
+        box = {"box_id": "box_0002", "output_image": "corrected.png"}
+        payload = {"lane_dividers_by_box": {"box_0002": [100, 200]}}
+        with patch("geocore_m1_3.pipeline.run_segment_depth", return_value={"status": "succeeded"}) as run:
+            _run_m13_for_box(box, {"output_dir": "mask"}, payload, Path("out"),
+                             hole_id="H", core_box_id="H_box_0002",
+                             depth_start_m=0.0, depth_end_m=1.0)
+        self.assertEqual(run.call_args.args[0]["layout"]["lane_dividers_x"], [100, 200])
+
+    def test_only_eligible_matching_source_prior_reaches_m13(self):
+        source = r"H:\RGB\hole01.dat"
+        box = {"box_id": "box_0002", "output_image": "corrected.png"}
+        payload = {"source_slot_priors": {
+            "schema": "geocore_source_slot_priors.v1",
+            "sources": {source: {"physical_slot_count": 5, "support_sample_ids": ["sample_014", "sample_015"],
+                                 "count_prior_eligible": True}},
+        }}
+        with patch("geocore_m1_3.pipeline.run_segment_depth", return_value={"status": "succeeded"}) as run:
+            _run_m13_for_box(box, {"output_dir": "mask"}, payload, Path("out"),
+                             hole_id="H", core_box_id="H_box_0002",
+                             depth_start_m=0.0, depth_end_m=1.0, m11_source_path=source)
+        self.assertEqual(run.call_args.args[0]["source_slot_prior"]["physical_slot_count"], 5)
+        self.assertNotIn("lane_dividers_x", run.call_args.args[0].get("layout", {}))
+
     def test_m0_preflight_accounts_for_padded_zarr_chunks(self):
         metadata = [
             SimpleNamespace(lines=768, samples=512, bands=3),

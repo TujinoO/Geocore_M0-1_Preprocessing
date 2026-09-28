@@ -310,6 +310,7 @@ def _run_m13_for_box(
     core_box_id: str,
     depth_start_m: float,
     depth_end_m: float,
+    m11_source_path: str | None = None,
 ) -> dict[str, Any]:
     from geocore_m1_3.pipeline import run_segment_depth
 
@@ -329,6 +330,35 @@ def _run_m13_for_box(
     }
     if payload.get("lane_count") is not None:
         m13_payload["layout"] = {"lane_count": int(payload["lane_count"])}
+    source_priors = payload.get("source_slot_priors")
+    if source_priors is not None:
+        if not isinstance(source_priors, dict) or source_priors.get("schema") != "geocore_source_slot_priors.v1":
+            raise ValueError("source_slot_priors must follow geocore_source_slot_priors.v1")
+        entries = source_priors.get("sources")
+        if not isinstance(entries, dict):
+            raise ValueError("source_slot_priors.sources must be an object")
+        if m11_source_path is not None:
+            source_key = str(Path(m11_source_path).resolve()).casefold()
+            matching = [record for path, record in entries.items()
+                        if str(Path(path).resolve()).casefold() == source_key]
+            if len(matching) > 1:
+                raise ValueError("source_slot_priors has duplicate entries for the same RGB image")
+            if matching and matching[0].get("count_prior_eligible"):
+                m13_payload["source_slot_prior"] = {
+                    "physical_slot_count": int(matching[0]["physical_slot_count"]),
+                    "support_sample_ids": matching[0]["support_sample_ids"],
+                    "source": str(m11_source_path),
+                    "status": "advisory_source_prior_not_per_box_truth",
+                }
+    dividers_by_box = payload.get("lane_dividers_by_box")
+    if dividers_by_box is not None:
+        if not isinstance(dividers_by_box, dict):
+            raise ValueError("lane_dividers_by_box must map M1-1 box ids to divider lists")
+        if box["box_id"] in dividers_by_box:
+            dividers = dividers_by_box[box["box_id"]]
+            if not isinstance(dividers, list):
+                raise ValueError(f"lane_dividers_by_box[{box['box_id']}] must be a list")
+            m13_payload.setdefault("layout", {})["lane_dividers_x"] = dividers
     if payload.get("lane_order"):
         m13_payload.setdefault("layout", {})["lane_order"] = payload["lane_order"]
     if payload.get("lane_direction"):
@@ -519,6 +549,7 @@ def run_preprocessing_pipeline(payload: dict[str, Any]) -> dict[str, Any]:
             core_box_id=core_box_id,
             depth_start_m=d0,
             depth_end_m=d1,
+            m11_source_path=str(m11_input_path),
         )
         segments_with_refs = _augment_segments_with_cube_refs(accessor, m13_result, box_context, m12_result)
         box_context["m1_2"] = m12_result
